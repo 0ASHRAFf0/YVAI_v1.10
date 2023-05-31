@@ -1,4 +1,3 @@
-from typing import Optional, Tuple, Union
 import customtkinter as cust
 from tkinter import ttk, messagebox
 import os
