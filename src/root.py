@@ -5,6 +5,7 @@ import requests
 import threading
 import webbrowser
 import customtkinter as cust
+import urllib3
 from PIL import Image
 from io import BytesIO
 from pathlib import Path
@@ -30,6 +31,7 @@ class Youtube(YouTube):
 
     async def write(self):
         await Youtube.get_video_info(self)
+        global video_thumbnail
         audio_dict = {}
         video_dict = {}
 
@@ -37,16 +39,15 @@ class Youtube(YouTube):
             video_dict.update(
                 [(f'{video.resolution} (.{video.mime_type[6:]}), ', f'{video.filesize_mb:.1f}')])
         for audio in audio_streams:
-            # file.write(f'{audio.abr} (.mp3), {audio.filesize_mb:.1f}')
             audio_dict.update([(audio.abr, audio.itag)])
         print(f'{video_title}\n{video_views}\n{video_channel}\n{video_length}\n')
         print(audio_dict)
         print(video_dict)
-        Root().fetching_bar.grid_remove()
-        Root().url_frame_EMPTY.grid_remove()
-
+        thumbnail_response = requests.get(video_thumbnail_url)
+        video_thumbnail = Image.open(BytesIO(thumbnail_response.content))
+        video_thumbnail.resize(size=(video_thumbnail.width,video_thumbnail.height),resample=Image.ANTIALIAS)
     async def get_video_info(self):
-        global video_title, video_length, video_views, video_channel, video_streams, audio_streams
+        global video_title, video_length, video_views, video_channel, video_streams, audio_streams,video_thumbnail_url
         video_title = self.title
         video_views = self.views
         video_channel = self.author
@@ -54,6 +55,7 @@ class Youtube(YouTube):
         video_streams = self.streams.filter(
             progressive=True, type='video')
         audio_streams = self.streams.filter(type='audio').order_by('abr')
+        video_thumbnail_url = self.thumbnail_url
 
 
 class Root(cust.CTk):
@@ -73,27 +75,20 @@ class Root(cust.CTk):
             self, corner_radius=0, fg_color='#232F34')
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
         self.navigation_frame.grid_rowconfigure(4, weight=1)
-        self.navigation_frame_label = cust.CTkLabel(self.navigation_frame, text="  Y  V  A  I",
-                                                    compound="left", font=cust.CTkFont(size=15, weight="bold"))
+        self.navigation_frame_label = cust.CTkLabel(self.navigation_frame, text="Y  V  A  I",
+                                                    compound="left", font= cust.CTkFont('Tajawal',weight='bold',size=20))
         self.navigation_frame_label.grid(row=0, column=0, padx=5, pady=50)
 
         # Nav Buttons Init
 
-        self.youtube_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Youtube", fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), anchor="w", command=self.youtube_button_event)
+        self.youtube_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Youtube", fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), anchor="w", font= cust.CTkFont('Tajawal',weight='bold',size=14), command=self.youtube_button_event)
         self.youtube_button.grid(row=1, column=0, sticky="ew", pady=15)
-        self.facebook_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Facebook",
-                                              fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"),
-                                              anchor="w", command=self.facebook_button_event)
-        self.facebook_button.grid(row=2, column=0, sticky="ew", pady=15)
-        self.instagram_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Instagram", fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"),
-                                               anchor="w", command=self.instagram_button_event)
-        self.instagram_button.grid(row=3, column=0, sticky="ew", pady=15)
         self.options_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Options",
-                                             fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"),
+                                             fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), font= cust.CTkFont('Tajawal',weight='bold'),
                                              anchor="w", command=self.option_button_event)
         self.options_button.grid(row=5, column=0, sticky="ew", pady=10)
         self.about_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="About",
-                                           fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"),
+                                           fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), font= cust.CTkFont('Tajawal',weight='bold'),
                                            anchor="w", command=self.about_button_event)
         self.about_button.grid(row=6, column=0, sticky="ew", pady=10)
 
@@ -101,21 +96,16 @@ class Root(cust.CTk):
 
         self.youtube_frame = cust.CTkScrollableFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
-        self.youtube_frame.grid_rowconfigure(1, weight=4)
-        self.youtube_frame.grid_rowconfigure(2, weight=1)
         self.youtube_frame.grid_rowconfigure(0, weight=1)
+        self.youtube_frame.grid_rowconfigure(1, weight=3)
         self.youtube_frame.grid_columnconfigure(0, weight=1)
         self.youtube_frame.grid(row=0, column=1, sticky="nsew")
-        self.facebook_frame = cust.CTkFrame(
-            self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
-        self.instagram_frame = cust.CTkFrame(
-            self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
         self.options_frame = cust.CTkFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
         self.about_frame = cust.CTkFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
 
-        # youtube frame init
+        # URL frame init
         self.URL_frame = cust.CTkFrame(
             self.youtube_frame, fg_color='transparent', bg_color='transparent')
         self.URL_frame.grid_rowconfigure(0, weight=1)
@@ -132,11 +122,8 @@ class Root(cust.CTk):
         self.URL_entry_field_Frame.grid_rowconfigure(2, weight=1)
         self.URL_entry_field_Frame.grid(
             row=0, column=1, sticky='nsew', pady=90)
-        self.url_frame_EMPTY = cust.CTkFrame(
-            self.URL_entry_field_Frame, width=2, height=2, bg_color='transparent', fg_color='transparent')
-        self.url_frame_EMPTY.grid(row=0, pady=8)
         self.URL_Label = cust.CTkLabel(
-            self.URL_frame, text="URL :   ", text_color='#eee')
+            self.URL_frame, text="URL :   ", text_color='#eee', font= cust.CTkFont('Tajawal',weight='bold'))
         self.URL_Label.grid(column=0, row=0, sticky='e', padx=10)
         self.URL_entryField = cust.CTkEntry(
             self.URL_entry_field_Frame, justify='center', height=35, text_color='#eee')
@@ -145,14 +132,16 @@ class Root(cust.CTk):
             '<Return>', lambda x: self.url_func())
         self.URL_entryField.focus_set()
         self.URL_button = cust.CTkButton(
-            self.URL_frame, text='Start', height=35, command=self.url_func, fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572')
+            self.URL_frame, text='Start', height=35, command=self.url_func, fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font= cust.CTkFont('Tajawal',weight='bold'))
         self.URL_button.grid(row=0, column=2, sticky='w')
-        self.fetching_bar = cust.CTkProgressBar(
-            self.URL_entry_field_Frame, width=200, mode='indeterminate', progress_color='green')
-        self.fetching_bar.grid(row=2, column=0, pady=5)
-        self.fetching_bar.grid_remove()
-        self.url_frame_EMPTY.grid_remove()
-
+        self.URL_copy = cust.CTkButton(self.URL_frame, text='Paste',height=5,fg_color=self.URL_entryField._fg_color,bg_color='transparent', border_spacing=8,border_color=self.URL_entryField._border_color,border_width=2,width=8,corner_radius=self.URL_entryField._corner_radius,font=cust.CTkFont(family='Helvatica',size=13,weight='bold'),command=self.copy_URL)
+        self.URL_copy.grid(row=0,column=1,sticky='e',padx=1)
+        # info frame init
+        self.info_frame = cust.CTkFrame(self.youtube_frame,fg_color='#eee')
+        self.info_frame.columnconfigure(0,weight=1)
+        self.info_frame.rowconfigure(0,weight=1)
+        self.info_frame.rowconfigure(1,weight=4)
+        self.info_frame.grid(row=1,column=0,sticky='nsew')
         # Select Frames Init
 
         self.select_frame_by_name("youtube")
@@ -161,10 +150,6 @@ class Root(cust.CTk):
         # set button color for selected button
         self.youtube_button.configure(
             bg_color=("#F9AA33", "#344955") if name == "youtube" else "transparent")
-        self.facebook_button.configure(
-            bg_color=("#F9AA33", "#344955") if name == "facebook" else "transparent")
-        self.instagram_button.configure(
-            bg_color=("#F9AA33", "#344955") if name == "instagram" else "transparent")
         self.options_button.configure(
             bg_color=("#F9AA33", "#344955") if name == "options" else "transparent")
         self.about_button.configure(
@@ -174,14 +159,6 @@ class Root(cust.CTk):
             self.youtube_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.youtube_frame.grid_forget()
-        if name == "facebook":
-            self.facebook_frame.grid(row=0, column=1, sticky="nsew")
-        else:
-            self.facebook_frame.grid_forget()
-        if name == "instagram":
-            self.instagram_frame.grid(row=0, column=1, sticky="nsew")
-        else:
-            self.instagram_frame.grid_forget()
         if name == "options":
             self.options_frame.grid(row=0, column=1, sticky="nsew")
         else:
@@ -194,22 +171,29 @@ class Root(cust.CTk):
     def youtube_button_event(self):
         self.select_frame_by_name("youtube")
 
-    def facebook_button_event(self):
-        self.select_frame_by_name("facebook")
-
-    def instagram_button_event(self):
-        self.select_frame_by_name("instagram")
-
     def option_button_event(self):
         self.select_frame_by_name("options")
 
     def about_button_event(self):
         self.select_frame_by_name("about")
 
-    def show_fetching_bar(self):
-        self.fetching_bar.grid(row=2, column=0, pady=5)
-        self.url_frame_EMPTY.grid(row=0, pady=8)
-        self.fetching_bar.start()
+    def copy_URL(self) :
+        global data
+        data = self.clipboard_get()
+        self.URL_entryField.delete(0, cust.END)
+        self.URL_entryField.insert(string=data,index=0)
+
+    def delete_first(self) :
+        self.thumbnail_frame.grid_forget()
+
+    def show_info(self) :
+        self.tkinterImage_video_thumbnail = cust.CTkImage(light_image=video_thumbnail,
+                                  dark_image=video_thumbnail,
+                                  size=(video_thumbnail.width,video_thumbnail.height))
+        self.thumbnail_frame = cust.CTkLabel(self.info_frame,height=video_thumbnail.height,width=video_thumbnail.width,image=self.tkinterImage_video_thumbnail,fg_color='#000',text='')
+        self.thumbnail_frame.grid(row=1,column=0)
+        print(video_thumbnail.size)
+        video_thumbnail.show()
 
     def url_func(self):
         if not self.URL_entryField.get():  # if entry was empty
@@ -217,13 +201,18 @@ class Root(cust.CTk):
                 message='URL field is empty            ', title='Error')
         else:
             try:
+                try:
+                    self.delete_first()
+                except Exception as e:
+                    pass
                 Youtube.url = self.URL_entryField.get()
                 YouTube(Youtube.url).check_availability()
                 asyncio.run(Youtube.write(Youtube()))
-                Root().show_fetching_bar()
+                self.show_info()
             except Exception as e:
                 messagebox.showerror(
                     message='URL is invalid            ', title='Error')
+                #raise e
 
 
 if __name__ == "__main__":
