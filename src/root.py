@@ -1,16 +1,16 @@
 import os
+from Exc import Exc
 import time
 import asyncio
-import requests
 import threading
 import webbrowser
 import customtkinter as cust
-import urllib3
 from PIL import Image
 from io import BytesIO
 from pathlib import Path
+from tkinter import messagebox
 from pytube import YouTube
-from tkinter import ttk, messagebox
+from requests import get
 from moviepy.video.io.VideoFileClip import VideoFileClip
 # -----------Main class--------------
 '''
@@ -21,7 +21,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 # '''
 
 #https://youtu.be/17NLNg6v1qg
-
+#www.youtube.com/watch?v=oElol6JnT0w
 class Youtube(YouTube):
     '''Youtube Video Informations'''
 
@@ -31,7 +31,7 @@ class Youtube(YouTube):
 
     async def write(self):
         await Youtube.get_video_info(self)
-        global video_thumbnail
+        global video_thumbnail,video_dict,audio_dict
         audio_dict = {}
         video_dict = {}
 
@@ -40,18 +40,20 @@ class Youtube(YouTube):
                 [(f'{video.resolution} (.{video.mime_type[6:]}), ', f'{video.filesize_mb:.1f}')])
         for audio in audio_streams:
             audio_dict.update([(audio.abr, audio.itag)])
-        print(f'{video_title}\n{video_views}\n{video_channel}\n{video_length}\n')
+        print(f'{video_title}\n{video_views}\n{video_channel}\n{video_length}\n{video_publish}\n')
         print(audio_dict)
         print(video_dict)
-        thumbnail_response = requests.get(video_thumbnail_url)
+        print(audio_streams)
+        thumbnail_response = get(video_thumbnail_url)
         video_thumbnail = Image.open(BytesIO(thumbnail_response.content))
-        video_thumbnail.resize(size=(video_thumbnail.width,video_thumbnail.height),resample=Image.ANTIALIAS)
+        video_thumbnail.resize(size=(video_thumbnail.width//2,video_thumbnail.height//2),resample=Image.ANTIALIAS)
     async def get_video_info(self):
-        global video_title, video_length, video_views, video_channel, video_streams, audio_streams,video_thumbnail_url
+        global video_title, video_length, video_views, video_channel,video_publish, video_streams, audio_streams,video_thumbnail_url
         video_title = self.title
         video_views = self.views
         video_channel = self.author
         video_length = self.length
+        video_publish = self.publish_date
         video_streams = self.streams.filter(
             progressive=True, type='video')
         audio_streams = self.streams.filter(type='audio').order_by('abr')
@@ -105,7 +107,7 @@ class Root(cust.CTk):
         self.about_frame = cust.CTkFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
 
-        # URL frame init
+        # URL(Youtube) frame init
         self.URL_frame = cust.CTkFrame(
             self.youtube_frame, fg_color='transparent', bg_color='transparent')
         self.URL_frame.grid_rowconfigure(0, weight=1)
@@ -137,10 +139,10 @@ class Root(cust.CTk):
         self.URL_copy = cust.CTkButton(self.URL_frame, text='Paste',height=5,fg_color=self.URL_entryField._fg_color,bg_color='transparent', border_spacing=8,border_color=self.URL_entryField._border_color,border_width=2,width=8,corner_radius=self.URL_entryField._corner_radius,font=cust.CTkFont(family='Helvatica',size=13,weight='bold'),command=self.copy_URL)
         self.URL_copy.grid(row=0,column=1,sticky='e',padx=1)
         # info frame init
-        self.info_frame = cust.CTkFrame(self.youtube_frame,fg_color='#eee')
+        self.info_frame = cust.CTkFrame(self.youtube_frame,fg_color='transparent')
         self.info_frame.columnconfigure(0,weight=1)
+        self.info_frame.columnconfigure(1,weight=1)
         self.info_frame.rowconfigure(0,weight=1)
-        self.info_frame.rowconfigure(1,weight=4)
         self.info_frame.grid(row=1,column=0,sticky='nsew')
         # Select Frames Init
 
@@ -189,12 +191,30 @@ class Root(cust.CTk):
     def show_info(self) :
         self.tkinterImage_video_thumbnail = cust.CTkImage(light_image=video_thumbnail,
                                   dark_image=video_thumbnail,
-                                  size=(video_thumbnail.width,video_thumbnail.height))
-        self.thumbnail_frame = cust.CTkLabel(self.info_frame,height=video_thumbnail.height,width=video_thumbnail.width,image=self.tkinterImage_video_thumbnail,fg_color='#000',text='')
-        self.thumbnail_frame.grid(row=1,column=0)
-        print(video_thumbnail.size)
-        video_thumbnail.show()
-
+                                  size=(video_thumbnail.width*(2/3),video_thumbnail.height*(2/3)))
+        self.thumbnail_frame = cust.CTkLabel(self.info_frame,image=self.tkinterImage_video_thumbnail,fg_color='#000',text='',corner_radius=4)
+        self.thumbnail_frame.grid(row=0,column=0,padx=10)
+        # video details frame init :
+        self.details_frame = cust.CTkFrame(self.info_frame,fg_color='transparent',width=self.info_frame.winfo_width()//2,height=self.info_frame.winfo_height())
+        self.details_frame.columnconfigure(0,weight=1)
+        self.details_frame.rowconfigure(0,weight=1)
+        self.details_frame.rowconfigure(1,weight=1)
+        self.details_frame.rowconfigure(2,weight=1)
+        self.details_frame.rowconfigure(3,weight=1)
+        self.details_frame.rowconfigure(4,weight=1)
+        self.details_frame.grid(row=0,column=1,sticky='nsew',padx=20,pady=20)
+        self.vid_title = cust.CTkLabel(self.details_frame,font=cust.CTkFont('Tajawal',weight='normal',size=17),text=f'title: {video_title}',justify='left')
+        self.vid_title.grid(row=0,sticky='w')
+        self.vid_length  = cust.CTkLabel(self.details_frame,font=cust.CTkFont('Tajawal',weight='normal',size=17),text=f'video duration: {video_length}',justify='left')
+        self.vid_length.grid(row=1,sticky='w')
+        self.vid_author = cust.CTkLabel(self.details_frame,font=cust.CTkFont('Tajawal',weight='normal',size=17),text=f'channel: {video_channel}',justify='left')
+        self.vid_author.grid(row=2,sticky='w')
+        self.vid_views = cust.CTkLabel(self.details_frame,font=cust.CTkFont('Tajawal',weight='normal',size=17),text=f'{video_views} view',justify='left')
+        self.vid_views.grid(row=3,sticky='w')
+        self.vid_publish = cust.CTkLabel(self.details_frame,font=cust.CTkFont('Tajawal',weight='normal',size=17),text=f'publish date: {video_publish}',justify='left')
+        self.vid_publish.grid(row=4,sticky='w')
+        #self.vid_streams = video_dict
+        #self.audio_streams = audio_dict
     def url_func(self):
         if not self.URL_entryField.get():  # if entry was empty
             messagebox.showerror(
@@ -203,17 +223,38 @@ class Root(cust.CTk):
             try:
                 try:
                     self.delete_first()
-                except Exception as e:
+                except Exception:
                     pass
                 Youtube.url = self.URL_entryField.get()
                 YouTube(Youtube.url).check_availability()
                 asyncio.run(Youtube.write(Youtube()))
                 self.show_info()
             except Exception as e:
-                messagebox.showerror(
-                    message='URL is invalid            ', title='Error')
-                #raise e
-
+                if e in Exc.Internet_ExcList :
+                    messagebox.showerror(
+                        message='Check internet connection and try again', title='Error')
+                elif e == Exc.ageRestricted_Error :
+                     messagebox.showerror(
+                        message='The Video is age restricted, can\'t be accessed ', title='Error')
+                elif e == Exc.stream_Error :
+                    messagebox.showerror(
+                        message='The Video is a live stream, it\'s not downloadable', title='Error')
+                elif e == Exc.videoMembersOnly_Error :
+                    messagebox.showerror(
+                        message='The Video is members only, can\'t be accessed ', title='Error')
+                elif e == Exc.videoPrivate_Error :
+                    messagebox.showerror(
+                        message='The Video is Private', title='Error')
+                elif e == Exc.videoRegionBlocked_Error :
+                    messagebox.showerror(
+                        message='The Video is unavailable in your region', title='Error')
+                elif e == Exc.videoUnavailable_Error :
+                    messagebox.showerror(
+                        message='The Video is unavailable', title='Error')
+                else :
+                    messagebox.showerror(
+                        message='URL is invalid            ', title='Error')
+                raise e
 
 if __name__ == "__main__":
     root = Root()
