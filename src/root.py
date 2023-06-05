@@ -2,6 +2,7 @@ import os
 from Exc import Exc
 from images import Images
 from time import strftime, gmtime
+from options import Options
 import asyncio
 import threading
 import webbrowser
@@ -12,7 +13,6 @@ from pathlib import Path
 from tkinter import messagebox
 from pytube import YouTube
 from requests import get
-from idlelib.tooltip import Hovertip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 # -----------Main class--------------
 '''
@@ -20,8 +20,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 #232F34 darker
 #4A6572 lighter
 #F9AA33 yellow
-# '''
-'''
+
 https://youtu.be/17NLNg6v1qg
 www.youtube.com/watch?v=oElol6JnT0w
 https://www.youtube.com/watch?v=PITSYsAEjF0
@@ -71,9 +70,6 @@ class Youtube(YouTube):
 
 class Root(cust.CTk):
     """Main Class Of App (Root Of App)"""
-    video_directory = 'lol'
-    audio_directory = None
-    thumbnail_directory = None
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -105,8 +101,15 @@ class Root(cust.CTk):
                                            fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), font=cust.CTkFont('Tajawal', weight='bold'),
                                            anchor="w", command=self.about_button_event)
         self.about_button.grid(row=6, column=0, sticky="ew", pady=10)
+        # Options Frame init
 
-        # Button Frames Init
+        self.options_frame = cust.CTkScrollableFrame(
+            self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
+        self.options_frame.grid_rowconfigure(3, weight=1)
+        self.options_frame.grid_columnconfigure(0, weight=1)
+        self.options_frame.grid_columnconfigure(1, weight=6)
+
+        # YouTube Frame Init
 
         self.youtube_frame = cust.CTkScrollableFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
@@ -147,9 +150,9 @@ class Root(cust.CTk):
             '<Return>', lambda x: self.url_func())
         self.URL_button = cust.CTkButton(
             self.URL_frame, text='Start', height=35, command=self.url_func, fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'))
-        self.URL_button.grid(row=0, column=2, sticky='w',padx=10)
+        self.URL_button.grid(row=0, column=2, sticky='w', padx=10)
         self.URL_paste = cust.CTkButton(self.URL_frame, text='Paste', height=5, fg_color=self.URL_entryField._fg_color, bg_color='transparent', border_spacing=8, border_color=self.URL_entryField._border_color,
-                                       border_width=2, width=8, corner_radius=self.URL_entryField._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
+                                        border_width=2, width=8, corner_radius=self.URL_entryField._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
         self.URL_paste.grid(row=0, column=1, sticky='e', padx=1)
 
         # info frame init
@@ -257,18 +260,19 @@ class Root(cust.CTk):
         self.download_frame.grid_columnconfigure(0, weight=1)
         self.download_frame.grid(row=1, column=0, sticky='nsew')
         self.download_frame.grid_propagate(0)
-        self.download_options_frame = cust.CTkFrame(self.download_frame,fg_color='transparent')
-        self.download_options_frame.grid_rowconfigure(0,weight=1)
-        self.download_options_frame.grid_columnconfigure(0,weight=2)
-        self.download_options_frame.grid_columnconfigure(1,weight=3)
-        self.download_options_frame.grid(row=0,column=0,sticky='nsew')
+        self.download_options_frame = cust.CTkFrame(
+            self.download_frame, fg_color='transparent')
+        self.download_options_frame.grid_rowconfigure(0, weight=1)
+        self.download_options_frame.grid_columnconfigure(0, weight=2)
+        self.download_options_frame.grid_columnconfigure(1, weight=3)
+        self.download_options_frame.grid(row=0, column=0, sticky='nsew')
         self.download_button = cust.CTkButton(
-            self.download_options_frame, text='Download', height=35, command=self.dl_video, fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'), state='disable',text_color_disabled='gray40')
-        self.download_button.grid(row=0, column=1,sticky='w',padx=(20,0))
+            self.download_options_frame, text='Download', height=35, command=self.dl_video, fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'), text_color_disabled='gray40')
+        self.download_button.grid(row=0, column=1, sticky='w', padx=(20, 0))
         menu_stringVar = cust.StringVar(value='Choose download option')
         self.download_menu = cust.CTkOptionMenu(self.download_options_frame, height=35, variable=menu_stringVar, fg_color='#232F34', bg_color='transparent', button_color='#4A6572', button_hover_color='#F9AA33', corner_radius=4,
                                                 dropdown_fg_color='#232F34', dropdown_text_color='#eee', font=cust.CTkFont('Tajawal'), dropdown_font=cust.CTkFont('Tajawal'), values=['1', '2', '3'], hover='#4A6572', dropdown_hover_color='#4A6572')
-        self.download_menu.grid(row=0, column=0,sticky='e',padx=(0,20))
+        self.download_menu.grid(row=0, column=0, sticky='e', padx=(0, 20))
 
 # Directory Entry Init
         directory_stringVar = cust.StringVar(value=f'{Root.video_directory}')
@@ -284,12 +288,12 @@ class Root(cust.CTk):
             self.directory_Frame, text="download directory :", text_color='#eee', font=cust.CTkFont('Tajawal', weight='bold'))
         self.browse_Label.grid(column=0, row=0, sticky='e', padx=20)
         self.directory_Entry = cust.CTkEntry(
-            self.directory_Frame, justify='center', height=35, text_color='#eee',width=self.URL_entryField.winfo_width(),textvariable=directory_stringVar)
+            self.directory_Frame, justify='center', height=35, text_color='#eee', width=self.URL_entryField.winfo_width(), textvariable=directory_stringVar)
         self.directory_Entry.grid(column=1, row=0, sticky='w', pady=10)
         self.browse_Button = cust.CTkButton(self.directory_Entry, text='Browse', height=5, fg_color=self.directory_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.directory_Entry._border_color,
-                                       border_width=2, width=8, corner_radius=self.directory_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
+                                            border_width=2, width=8, corner_radius=self.directory_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
         self.browse_Button.grid(row=0, column=1, sticky='e')
-#Video Entry Init 
+# Video Entry Init
 
         self.videoName_Frame = cust.CTkFrame(
             self.download_frame, fg_color='transparent')
@@ -302,22 +306,22 @@ class Root(cust.CTk):
             self.videoName_Frame, text="File name   :    ", text_color='#eee', font=cust.CTkFont('Tajawal', weight='bold'))
         self.videoName_Label.grid(column=0, row=0, sticky='e', padx=37)
         self.videoName_Entry = cust.CTkEntry(
-            self.videoName_Frame, justify='center', height=35, text_color='#eee',width=self.URL_entryField.winfo_width(),textvariable=videoName_stringVar)
+            self.videoName_Frame, justify='center', height=35, text_color='#eee', width=self.URL_entryField.winfo_width(), textvariable=videoName_stringVar)
         self.videoName_Entry.grid(column=1, row=0, sticky='w', pady=10)
         self.videoName_Button = cust.CTkButton(self.videoName_Entry, text='Default', height=5, fg_color=self.directory_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.directory_Entry._border_color,
-                                       border_width=2, width=8, corner_radius=self.directory_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
+                                               border_width=2, width=8, corner_radius=self.directory_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
         self.videoName_Button.grid(row=0, column=1, sticky='e')
 
     def write_video_streamsMenuOptions(self):
         pass
 
-    def scanning(self) :
-        if self.download_menu.get() != 'Choose download option' :
-            self.download_button['state'] = 'normal'
-        self.after(100,self.scanning)
-
     def dl_video(self):
-        pass
+        if self.download_menu.get() == 'Choose download option':
+            self.download_menu['fg_color'] == 'red'
+        if self.directory_Entry.get() == 'lol':
+            self.directory_Entry['border_color'] == 'red'
+        if self.videoName_Entry.get() == 'lol':
+            self.videoName_Entry['border_color'] == 'red'
 
     def dl_thumbnail(self):
         try:
@@ -326,7 +330,7 @@ class Root(cust.CTk):
             messagebox.showinfo(
                 message=f'Thumbnail downloaded in "{Images.current_path}\Downloads"')
         except Exception as e:
-            messagebox.showerror(message=f'Download failed')
+            messagebox.showerror(message=f'Download failed', title='Error')
 
     def url_func(self):
         if not self.URL_entryField.get():  # if entry was empty
