@@ -6,6 +6,7 @@ from options import Options
 import asyncio
 import threading
 import webbrowser
+from current_path import current_path,download_default_path
 import customtkinter as cust
 from PIL import Image
 from io import BytesIO
@@ -70,6 +71,7 @@ class Youtube(YouTube):
 
 class Root(cust.CTk):
     """Main Class Of App (Root Of App)"""
+    video_directory = 'dir'
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -105,9 +107,73 @@ class Root(cust.CTk):
 
         self.options_frame = cust.CTkScrollableFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
-        self.options_frame.grid_rowconfigure(3, weight=1)
         self.options_frame.grid_columnconfigure(0, weight=1)
-        self.options_frame.grid_columnconfigure(1, weight=6)
+        self.options_frame.grid_rowconfigure(3, weight=1)
+        self.options_label = cust.CTkLabel(self.options_frame, text='Download Options', font=cust.CTkFont(
+            'Tajawal', weight='bold', size=19), text_color='#eee')
+        self.options_label.grid(row=0, column=0, padx=30,
+                                pady=(60, 20), sticky='w')
+        self.options_save_frame = cust.CTkFrame(self.options_frame,fg_color='transparent')
+        self.options_save_frame.grid_rowconfigure(0,weight=1)
+        self.options_save_frame.grid_columnconfigure(0,weight=1)
+        self.options_save_frame.grid(sticky='sew',row=15)
+        self.options_save_frame.grid_propagate(0)
+        self.options_save_button = cust.CTkButton(self.options_save_frame ,text='Save', height=35, command=None, fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'))
+        self.options_save_button.grid(row=0,column=0,sticky='es',padx=20,pady=20)
+    # Video Dir Options Init
+        self.options_videoDir_Frame = cust.CTkFrame(
+            self.options_frame, fg_color='transparent')
+        self.options_videoDir_Frame.grid_rowconfigure(0, weight=1)
+        self.options_videoDir_Frame.grid_columnconfigure(0, weight=1)
+        self.options_videoDir_Frame.grid_columnconfigure(1, weight=6)
+        self.options_videoDir_Frame.grid(
+            row=1, column=0, sticky='nsew', pady=(0, 20))
+        self.options_videoDir_label = cust.CTkLabel(
+            self.options_videoDir_Frame, text="Default video directory :", text_color='#eee', font=cust.CTkFont('Tajawal', size=14))
+        self.options_videoDir_label.grid(column=0, row=0, sticky='w', padx=30)
+        self.options_videoDir_Entry = cust.CTkEntry(
+            self.options_videoDir_Frame, justify='center', height=35, width=400, text_color='#eee', textvariable=None)
+        self.options_videoDir_Entry.grid(column=1, row=0, sticky='w', pady=10)
+        self.options_videoDir_button = cust.CTkButton(self.options_videoDir_Entry, text='Browse', height=5, fg_color=self.options_videoDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.options_videoDir_Entry._border_color,
+                                                      border_width=2, width=8, corner_radius=self.options_videoDir_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
+        self.options_videoDir_button.grid(row=0, column=1, sticky='e')
+    # Audio Dir Options Init
+        self.options_audioDir_Frame = cust.CTkFrame(
+            self.options_frame, fg_color='transparent')
+        self.options_audioDir_Frame.grid_rowconfigure(0, weight=1)
+        self.options_audioDir_Frame.grid_columnconfigure(0, weight=1)
+        self.options_audioDir_Frame.grid_columnconfigure(1, weight=6)
+        self.options_audioDir_Frame.grid(
+            row=2, column=0, sticky='nsew', pady=20)
+        self.options_audioDir_label = cust.CTkLabel(
+            self.options_audioDir_Frame, text="Default audio directory :", text_color='#eee', font=cust.CTkFont('Tajawal', size=14))
+        self.options_audioDir_label.grid(
+            column=0, row=0, sticky='w', padx=(30, 32))
+        self.options_audioDir_Entry = cust.CTkEntry(
+            self.options_audioDir_Frame, justify='center', height=35, width=400, text_color='#eee', textvariable=None)
+        self.options_audioDir_Entry.grid(column=1, row=0, sticky='w', pady=10)
+        self.options_audioDir_button = cust.CTkButton(self.options_audioDir_Entry, text='Browse', height=5, fg_color=self.options_audioDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.options_audioDir_Entry._border_color,
+                                                      border_width=2, width=8, corner_radius=self.options_audioDir_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
+        self.options_audioDir_button.grid(row=0, column=1, sticky='e')
+    # Audio Dir Options Init
+        self.options_thumbnailDir_Frame = cust.CTkFrame(
+            self.options_frame, fg_color='transparent')
+        self.options_thumbnailDir_Frame.grid_rowconfigure(0, weight=1)
+        self.options_thumbnailDir_Frame.grid_columnconfigure(0, weight=1)
+        self.options_thumbnailDir_Frame.grid_columnconfigure(1, weight=6)
+        self.options_thumbnailDir_Frame.grid(
+            row=3, column=0, sticky='nsew', pady=20)
+        self.options_thumbnailDir_label = cust.CTkLabel(
+            self.options_thumbnailDir_Frame, text="Default thumbnail directory :", text_color='#eee', font=cust.CTkFont('Tajawal', size=14))
+        self.options_thumbnailDir_label.grid(
+            column=0, row=0, sticky='w', padx=(30, 5))
+        self.options_thumbnailDir_Entry = cust.CTkEntry(
+            self.options_thumbnailDir_Frame, justify='center', height=35, width=400, text_color='#eee', textvariable=None)
+        self.options_thumbnailDir_Entry.grid(
+            column=1, row=0, sticky='w', pady=10)
+        self.options_thumbnailDir_button = cust.CTkButton(self.options_thumbnailDir_Entry, text='Browse', height=5, fg_color=self.options_thumbnailDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.options_thumbnailDir_Entry._border_color,
+                                                          border_width=2, width=8, corner_radius=self.options_thumbnailDir_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
+        self.options_thumbnailDir_button.grid(row=0, column=1, sticky='e')
 
         # YouTube Frame Init
 
@@ -118,8 +184,6 @@ class Root(cust.CTk):
         self.youtube_frame.grid_rowconfigure(2, weight=3)
         self.youtube_frame.grid_columnconfigure(0, weight=1)
         self.youtube_frame.grid(row=0, column=1, sticky="nsew")
-        self.options_frame = cust.CTkFrame(
-            self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
         self.about_frame = cust.CTkFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
 
@@ -204,6 +268,10 @@ class Root(cust.CTk):
     def delete_first(self):
         self.thumbnail_frame.grid_forget()
 # show video informations
+    def save_options(self) :
+        self.options_videoDir_Entry.get()
+        self.options_audioDir_Entry.get()
+        self.options_thumbnailDir_Entry.get()
 
     def show_info(self):
         self.tkinterImage_video_thumbnail = cust.CTkImage(light_image=video_thumbnail,
@@ -276,7 +344,8 @@ class Root(cust.CTk):
 
 # Directory Entry Init
         directory_stringVar = cust.StringVar(value=f'{Root.video_directory}')
-        videoName_stringVar = cust.StringVar(value=f'{video_title}')
+        videoName_stringVar = cust.StringVar(
+            value=f'{Exc.replace_invalid_char(video_title)}')
         self.directory_Frame = cust.CTkFrame(
             self.download_frame, fg_color='transparent')
         self.directory_Frame.grid_rowconfigure(0, weight=1)
@@ -326,11 +395,12 @@ class Root(cust.CTk):
     def dl_thumbnail(self):
         try:
             video_thumbnail.save(
-                rf"{Images.current_path}\Downloads\{video_title.replace(' ','_')}.png")
+                rf"{current_path}\Downloads\Thumbnail_{Exc.replace_invalid_char(video_title)}.png")
             messagebox.showinfo(
-                message=f'Thumbnail downloaded in "{Images.current_path}\Downloads"')
+                message=f'Thumbnail downloaded in "{current_path}\Downloads"')
         except Exception as e:
             messagebox.showerror(message=f'Download failed', title='Error')
+            Exc.error_log(f'Thumbnail Failed ({e})')
 
     def url_func(self):
         if not self.URL_entryField.get():  # if entry was empty
@@ -351,28 +421,35 @@ class Root(cust.CTk):
                 if e in Exc.Internet_ExcList:
                     messagebox.showerror(
                         message='Check internet connection and try again', title='Error')
+                    Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.ageRestricted_Error:
                     messagebox.showerror(
                         message='The Video is age restricted, can\'t be accessed ', title='Error')
+                    Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.stream_Error:
                     messagebox.showerror(
                         message='The Video is a live stream, it\'s not downloadable', title='Error')
+                    Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.videoMembersOnly_Error:
                     messagebox.showerror(
                         message='The Video is members only, can\'t be accessed ', title='Error')
+                    Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.videoPrivate_Error:
                     messagebox.showerror(
                         message='The Video is Private', title='Error')
+                    Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.videoRegionBlocked_Error:
                     messagebox.showerror(
                         message='The Video is unavailable in your region', title='Error')
+                    Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.videoUnavailable_Error:
                     messagebox.showerror(
                         message='The Video is unavailable', title='Error')
+                    Exc.error_log(f'Video Failed ({e})')
                 else:
                     messagebox.showerror(
                         message='URL is invalid            ', title='Error')
-                raise e
+                    Exc.error_log(f'Video Failed ({e})')
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import os,customtkinter as cust
 from PIL import Image
+from current_path import current_path,download_default_path
 class Images() :
-    current_path = os.path.dirname(os.path.realpath(__file__))
     download_image = cust.CTkImage(Image.open(current_path + "/images/download.png"),
                                                size=(20,20))
