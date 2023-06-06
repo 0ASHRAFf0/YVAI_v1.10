@@ -1,6 +1,3 @@
-2023-06-06 19:12:41,933: py.warnings, WARNING : d:\MOHAMED ASHRAF\Coding\projects\YVAI_v1.10\src\root.py:56: DeprecationWarning: ANTIALIAS is deprecated and will be removed in Pillow 10 (2023-07-01). Use LANCZOS or Resampling.LANCZOS instead.
-  video_thumbnail.width//2, video_thumbnail.height//2), resample=Image.ANTIALIAS)
-
-2023-06-06 20:15:13,860: py.warnings, WARNING : d:\MOHAMED ASHRAF\Coding\projects\YVAI_v1.10\src\root.py:57: DeprecationWarning: ANTIALIAS is deprecated and will be removed in Pillow 10 (2023-07-01). Use LANCZOS or Resampling.LANCZOS instead.
-  video_thumbnail.width//2, video_thumbnail.height//2), resample=Image.ANTIALIAS)
-
+2023-06-07 00:02:46,723: root, ERROR : Video Failed (module 'customtkinter' has no attribute 'CTksettingMenu')
+2023-06-07 00:05:03,530: root, ERROR : Video Failed (module 'customtkinter' has no attribute 'CTksettingMenu')
+2023-06-07 00:05:45,547: root, ERROR : Video Failed (type object 'Root' has no attribute 'video_directory')
