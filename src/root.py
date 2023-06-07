@@ -10,22 +10,20 @@ from current_path import current_path, download_default_path
 import customtkinter as cust
 from PIL import Image
 from io import BytesIO
-from pathlib import Path
-from tkinter import messagebox
+from tkinter import messagebox, Menu
 from pytube import YouTube
 from requests import get
 from moviepy.video.io.VideoFileClip import VideoFileClip
-import sys
 # -----------Main class--------------
 '''
+https://youtu.be/17NLNg6v1qg
+www.youtube.com/watch?v=oElol6JnT0w
+https://www.youtube.com/watch?v=PITSYsAEjF0
+
 #344955 center
 #232F34 darker
 #4A6572 lighter
 #F9AA33 yellow
-
-https://youtu.be/17NLNg6v1qg
-www.youtube.com/watch?v=oElol6JnT0w
-https://www.youtube.com/watch?v=PITSYsAEjF0
 '''
 
 
@@ -38,20 +36,15 @@ class Youtube(YouTube):
 
     async def write(self):
         await Youtube.get_video_info(self)
-        global video_thumbnail, video_dict, audio_dict
-        audio_dict = {}
-        video_dict = {}
+        global video_thumbnail, streams_dict
+        streams_dict = {}
 
         for video in video_streams:
-            video_dict.update(
-                [(f'{video.resolution} (.{video.mime_type[6:]}), ', f'{video.filesize_mb:.1f}')])
+            streams_dict.update(
+                [(f'{video.resolution} (.{video.mime_type[6:]})            {video.filesize_mb:.1f} mb.', video.itag)])
         for audio in audio_streams:
-            audio_dict.update([(audio.abr, audio.itag)])
-        print(
-            f'{video_title}\n{video_views}\n{video_channel}\n{video_length}\n{video_publish}\n')
-        print(audio_dict)
-        print(video_dict)
-        print(audio_streams)
+            if audio.mime_type[6:] == 'mp4':
+                streams_dict.update([(f'{audio.abr} (.mp3)', audio.itag)])
         thumbnail_response = get(video_thumbnail_url)
         video_thumbnail = Image.open(BytesIO(thumbnail_response.content))
         video_thumbnail.resize(size=(
@@ -192,7 +185,8 @@ class Root(cust.CTk):
         # URL(Youtube) frame init
         self.URL_frame = cust.CTkFrame(
             self.youtube_frame, fg_color='transparent', bg_color='transparent')
-        self.URL_frame.grid_rowconfigure(0, weight=1)
+        self.URL_frame.grid_rowconfigure(0, weight=5)
+        self.URL_frame.grid_rowconfigure(1, weight=1)
         self.URL_frame.grid_columnconfigure(0, weight=2)
         self.URL_frame.grid_columnconfigure(1, weight=6)
         self.URL_frame.grid_columnconfigure(2, weight=3)
@@ -201,7 +195,7 @@ class Root(cust.CTk):
         self.URL_entry_field_Frame = cust.CTkFrame(
             self.URL_frame, fg_color='transparent')
         self.URL_entry_field_Frame.grid_columnconfigure(0, weight=1)
-        self.URL_entry_field_Frame.grid_rowconfigure(0, weight=0)
+        self.URL_entry_field_Frame.grid_rowconfigure(0, weight=1)
         self.URL_entry_field_Frame.grid_rowconfigure(1, weight=6)
         self.URL_entry_field_Frame.grid_rowconfigure(2, weight=1)
         self.URL_entry_field_Frame.grid(
@@ -220,6 +214,8 @@ class Root(cust.CTk):
         self.URL_paste = cust.CTkButton(self.URL_frame, text='Paste', height=5, fg_color=self.URL_entryField._fg_color, bg_color='transparent', border_spacing=8, border_color=self.URL_entryField._border_color,
                                         border_width=2, width=8, corner_radius=self.URL_entryField._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
         self.URL_paste.grid(row=0, column=1, sticky='e', padx=1)
+        self.fetching_label = cust.CTkLabel(
+            self.URL_frame, text='Fetching video data...', text_color='#b22222', font=cust.CTkFont('Helvatica', size=15, slant='italic'))
 
         # info frame init
         self.info_frame = cust.CTkFrame(
@@ -267,9 +263,13 @@ class Root(cust.CTk):
         data = self.clipboard_get()
         self.URL_entryField.delete(0, cust.END)
         self.URL_entryField.insert(string=data, index=0)
+        self.update_idletasks()
+        self.url_func()
 
     def delete_first(self):
-        self.thumbnail_frame.grid_forget()
+        self.download_frame.grid_forget()
+        self.info_frame.grid_forget()
+        self.update_idletasks()
 # show video informations
 
     def browse_dir(self, btn: cust.CTkButton):
@@ -355,8 +355,6 @@ class Root(cust.CTk):
         self.vid_publish.grid(row=4, sticky='w')
         self.info_frame.grid(row=2, column=0, sticky='nsew', pady=10)
 
-        # self.vid_streams = video_dict
-        # self.audio_streams = audio_dict
 # show download settings
     def show_dl_settings(self):
         self.download_frame = cust.CTkFrame(
@@ -375,15 +373,16 @@ class Root(cust.CTk):
         self.download_settings_frame.grid(row=0, column=0, sticky='nsew')
         self.download_button = cust.CTkButton(
             self.download_settings_frame, text='Download', height=35, command=self.dl_video, fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'), text_color_disabled='gray40')
-        menu_stringVar = cust.StringVar(value='Choose download setting')
-        self.download_menu = cust.CTkOptionMenu(self.download_settings_frame, height=35, variable=menu_stringVar, fg_color='#232F34', bg_color='transparent', button_color='#4A6572', button_hover_color='#F9AA33', corner_radius=4,
-                                                dropdown_fg_color='#232F34', dropdown_text_color='#eee', font=cust.CTkFont('Tajawal'), dropdown_font=cust.CTkFont('Tajawal'), values=['1', '2', '3'], hover='#4A6572', dropdown_hover_color='#4A6572')
+        self.menu_stringVar = cust.StringVar(value='Choose download option')
+        self.download_menu = cust.CTkOptionMenu(self.download_settings_frame, height=35, variable=self.menu_stringVar, fg_color='#232F34', bg_color='transparent', button_color='#F9AA33', button_hover_color='#4A6572', corner_radius=4,
+                                                dropdown_fg_color='#232F34', dropdown_text_color='#eee', font=cust.CTkFont('Tajawal'), dropdown_font=cust.CTkFont('Tajawal'), hover='#4A6572', dropdown_hover_color='#4A6572')
         self.download_button.grid(row=0, column=1, sticky='w', padx=(20, 0))
         self.download_menu.grid(row=0, column=0, sticky='e', padx=(0, 20))
 
 # Directory Entry Init
-        directory_stringVar = cust.StringVar(value=f'l')
-        videoName_stringVar = cust.StringVar(
+        self.directory_stringVar = cust.StringVar(
+            value=self.settings_videoDir_Entry.get())
+        self.videoName_stringVar = cust.StringVar(
             value=f'{Exc.replace_invalid_char(video_title)}')
         self.directory_Frame = cust.CTkFrame(
             self.download_frame, fg_color='transparent')
@@ -396,7 +395,7 @@ class Root(cust.CTk):
             self.directory_Frame, text="download directory :", text_color='#eee', font=cust.CTkFont('Tajawal', weight='bold'))
         self.browse_Label.grid(column=0, row=0, sticky='e', padx=20)
         self.directory_Entry = cust.CTkEntry(
-            self.directory_Frame, justify='center', height=35, text_color='#eee', width=self.URL_entryField.winfo_width(), textvariable=directory_stringVar)
+            self.directory_Frame, justify='center', height=35, text_color='#eee', width=self.URL_entryField.winfo_width(), textvariable=self.directory_stringVar)
         self.directory_Entry.grid(column=1, row=0, sticky='w', pady=10)
         self.browse_Button = cust.CTkButton(self.directory_Entry, text='Browse', height=5, fg_color=self.directory_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.directory_Entry._border_color,
                                             border_width=2, width=8, corner_radius=self.directory_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=lambda: self.browse_dir(btn=self.browse_Button))
@@ -414,22 +413,38 @@ class Root(cust.CTk):
             self.videoName_Frame, text="File name   :    ", text_color='#eee', font=cust.CTkFont('Tajawal', weight='bold'))
         self.videoName_Label.grid(column=0, row=0, sticky='e', padx=37)
         self.videoName_Entry = cust.CTkEntry(
-            self.videoName_Frame, justify='center', height=35, text_color='#eee', width=self.URL_entryField.winfo_width(), textvariable=videoName_stringVar)
+            self.videoName_Frame, justify='center', height=35, text_color='#eee', width=self.URL_entryField.winfo_width(), textvariable=self.videoName_stringVar)
         self.videoName_Entry.grid(column=1, row=0, sticky='w', pady=10)
         self.videoName_Button = cust.CTkButton(self.videoName_Entry, text='Default', height=5, fg_color=self.directory_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.directory_Entry._border_color,
-                                               border_width=2, width=8, corner_radius=self.directory_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
+                                               border_width=2, width=8, corner_radius=self.directory_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.set_default)
         self.videoName_Button.grid(row=0, column=1, sticky='e')
+        self.write_video_streamsMenusettings()
+
+    def set_default(self):
+        self.videoName_Entry.delete(0, cust.END)
+        self.videoName_Entry.insert(index=0, string=self.videoName_stringVar)
+        self.update_idletasks()
 
     def write_video_streamsMenusettings(self):
-        pass
+        self.stream_options_list = []
+        for stream in streams_dict:
+            self.stream_options_list.append(stream)
+        self.download_menu.configure(values=self.stream_options_list)
 
-    def dl_video(self):
-        if self.download_menu.get() == 'Choose download setting':
-            self.download_menu['fg_color'] == 'red'
-        if self.directory_Entry.get() == 'lol':
-            self.directory_Entry['border_color'] == 'red'
-        if self.videoName_Entry.get() == 'lol':
-            self.videoName_Entry['border_color'] == 'red'
+    # def check_download_options(self):
+    #     self.default_border = self.directory_Entry.cget('border_color')
+    #     if self.download_menu.get() == 'Choose download option':
+    #         self.download_menu.configure(button_color='red')
+    #         self.update_idletask()
+    #         return 0
+    #     if not os.path.isdir(self.directory_Entry.get()):
+    #         self.directory_Entry.configure(border_color='red')
+    #         self.directory_stringVar = 'Invalid directory'
+    #         return 0
+    #     for i in self.videoName_Entry.get():
+    #         if i in Exc.invalid_char:
+    #             self.videoName_Entry.configure(border_color='red')
+    #             return 0
 
     def dl_thumbnail(self):
         try:
@@ -451,41 +466,61 @@ class Root(cust.CTk):
                     self.delete_first()
                 except Exception:
                     pass
+                self.fetching_label.grid(row=1, column=1)
+                self.update_idletasks()
                 Youtube.url = self.URL_entryField.get()
                 YouTube(Youtube.url).check_availability()
                 asyncio.run(Youtube.write(Youtube()))
                 self.show_info()
                 self.show_dl_settings()
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
             except Exception as e:
                 if e in Exc.Internet_ExcList:
+                    self.fetching_label.grid_forget()
+                    self.update_idletasks()
                     messagebox.showerror(
                         message='Check internet connection and try again', title='Error')
                     Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.ageRestricted_Error:
+                    self.fetching_label.grid_forget()
+                    self.update_idletasks()
                     messagebox.showerror(
                         message='The Video is age restricted, can\'t be accessed ', title='Error')
                     Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.stream_Error:
+                    self.fetching_label.grid_forget()
+                    self.update_idletasks()
                     messagebox.showerror(
                         message='The Video is a live stream, it\'s not downloadable', title='Error')
                     Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.videoMembersOnly_Error:
+                    self.fetching_label.grid_forget()
+                    self.update_idletasks()
                     messagebox.showerror(
                         message='The Video is members only, can\'t be accessed ', title='Error')
                     Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.videoPrivate_Error:
+                    self.fetching_label.grid_forget()
+                    self.update_idletasks()
                     messagebox.showerror(
                         message='The Video is Private', title='Error')
                     Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.videoRegionBlocked_Error:
+                    self.fetching_label.grid_forget()
+                    self.update_idletasks()
                     messagebox.showerror(
                         message='The Video is unavailable in your region', title='Error')
                     Exc.error_log(f'Video Failed ({e})')
                 elif e == Exc.videoUnavailable_Error:
+                    self.fetching_label.grid_forget()
+                    self.update_idletasks()
                     messagebox.showerror(
                         message='The Video is unavailable', title='Error')
                     Exc.error_log(f'Video Failed ({e})')
                 else:
+                    self.fetching_label.grid_forget()
+                    self.update_idletasks()
                     messagebox.showerror(
                         message='URL is invalid            ', title='Error')
                     Exc.error_log(f'Video Failed ({e})')

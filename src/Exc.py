@@ -1,6 +1,6 @@
 from pytube import exceptions
 from requests.exceptions import ConnectionError, HTTPError, Timeout, ReadTimeout
-from urllib.error import URLError
+import urllib.error
 import logging
 from current_path import current_path,download_default_path
 
@@ -11,7 +11,7 @@ logging.basicConfig(filename='error_log.log', filemode='a',
 class Exc():
     invalid_char = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
     Internet_ExcList = [ConnectionError, HTTPError, ReadTimeout,
-                        Timeout, URLError, exceptions.HTMLParseError, OSError]
+                        Timeout, exceptions.HTMLParseError, OSError,urllib.error.URLError]
     stream_Error = exceptions.LiveStreamError
     ageRestricted_Error = exceptions.AgeRestrictedError
     videoUnavailable_Error = exceptions.VideoUnavailable
