@@ -469,6 +469,8 @@ class Root(cust.CTk):
         try:
             asyncio.run(Youtube.download_stream(
                 self=self, itag=self.itag, path_dir=self.path, filename=self.filename))
+            messagebox.showinfo(
+                message=f'File Downloaded Successfully in {self.path}')
         except PermissionError as e:
             messagebox.showerror(
                 'Error', message='Download failed\ntry to change download path in settings')
@@ -477,9 +479,9 @@ class Root(cust.CTk):
     def dl_thumbnail(self):
         try:
             video_thumbnail.save(
-                rf"{current_path}\Downloads\Thumbnail_{Exc.replace_invalid_char(video_title)}.png")
+                rf"{self.settings_thumbnailDir_Entry.get()}\Thumbnail_{Exc.replace_invalid_char(video_title)}.png")
             messagebox.showinfo(
-                message=f'Thumbnail downloaded in "{current_path}\Downloads"')
+                message=f'Thumbnail downloaded in "{self.settings_thumbnailDir_Entry.get()}"')
         except Exception as e:
             messagebox.showerror(message=f'Download failed', title='Error')
             Exc.error_log(f'Thumbnail Failed ({e})')
