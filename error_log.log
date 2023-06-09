@@ -1,0 +1,7 @@
+2023-06-09 06:35:46,217: py.warnings, WARNING : d:\MOHAMED ASHRAF\Coding\projects\YVAI_v1.10\src\root.py:476: RuntimeWarning: coroutine 'Youtube.download_stream' was never awaited
+  if Youtube.download_stream(
+
+2023-06-09 06:45:56,052: root, ERROR : Video Failed ('_tkinter.tkapp' object has no attribute 'progress_function')
+2023-06-09 06:48:44,529: root, ERROR : Video Failed ('_tkinter.tkapp' object has no attribute 'progress_function')
+2023-06-09 06:50:34,880: root, ERROR : Video Failed ('_tkinter.tkapp' object has no attribute 'progress_function')
+2023-06-09 06:51:06,047: root, ERROR : Video Failed ('_tkinter.tkapp' object has no attribute 'progress_function')

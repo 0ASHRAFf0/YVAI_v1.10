@@ -1,4 +1,4 @@
-import os
+import os,sys
 import asyncio
 import threading
 import webbrowser
@@ -16,7 +16,7 @@ from tkinter import messagebox, Menu
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from paths import current_path, download_default_path, check_download_path
 # -----------Main class--------------
-'''
+''''
 https://youtu.be/17NLNg6v1qg
 www.youtube.com/watch?v=oElol6JnT0w
 https://www.youtube.com/watch?v=PITSYsAEjF0
@@ -45,13 +45,15 @@ class Youtube(YouTube):
 
         for video in video_streams:
             streams_dict.update(
-                [(f'{video.resolution} (.{video.mime_type[6:]})            {video.filesize_mb:.1f} mb.', video.itag)])
+                [(f'{video.resolution} (.{video.mime_type[6:]})                 {video.filesize_mb:.1f} mb.', video.itag)])
             video_dict.update(
-                [(f'{video.resolution} (.{video.mime_type[6:]})            {video.filesize_mb:.1f} mb.', video.itag)])
+                [(f'{video.resolution} (.{video.mime_type[6:]})                 {video.filesize_mb:.1f} mb.', video.itag)])
         for audio in audio_streams:
             if audio.mime_type[6:] == 'mp4':
-                streams_dict.update([(f'{audio.abr} (.mp3)', audio.itag)])
-                audio_dict.update([(f'{audio.abr} (.mp3)', audio.itag)])
+                streams_dict.update(
+                    [(f'{audio.abr} (.mp3)            {audio.filesize_mb:.1f} mb.', audio.itag)])
+                audio_dict.update(
+                    [(f'{audio.abr} (.mp3)            {audio.filesize_mb:.1f} mb.', audio.itag)])
         thumbnail_response = get(video_thumbnail_url)
         video_thumbnail = Image.open(BytesIO(thumbnail_response.content))
         video_thumbnail.resize(size=(
@@ -71,9 +73,11 @@ class Youtube(YouTube):
         video_thumbnail_url = self.thumbnail_url
 
     async def download_stream(self, itag, path_dir, filename):
-        YouTube(url=video_url).streams.get_by_itag(itag=itag).download(
-            output_path=path_dir, filename=filename)
-
+        if not YouTube(url=video_url,on_progress_callback=None).streams.get_by_itag(itag=itag).exists_at_path(rf'{path_dir}\{filename}'):
+            YouTube(url=video_url).streams.get_by_itag(itag=itag).download(
+                output_path=path_dir, filename=filename)
+            return 1
+        return 0
 
 class Root(cust.CTk):
     """Main Class Of App (Root Of App)"""
@@ -307,7 +311,7 @@ class Root(cust.CTk):
         thumbnail_Op_get = self.settings_thumbnailDir_Entry.get()
         for i in [vid_Op_get, audio_Op_get, thumbnail_Op_get]:
             if not os.path.isdir(i):
-                messagebox.showerror(
+                messagebox.showwarning(
                     title='Error', message=f'Unknown dir : {i}\nSettings Unsaved')
                 return 0
         Settings.write_settings(
@@ -462,19 +466,28 @@ class Root(cust.CTk):
     def dl_video(self):
         self.option_choosen = self.download_menu.get()
         self.itag = streams_dict[self.option_choosen]
-        self.file_ext = self.get_ext(self.option_choosen[1:-1])
+        self.file_ext = self.get_ext(self.option_choosen)
         self.path = self.settings_videoDir_Entry.get(
         ) if self.option_choosen in video_dict else self.settings_audioDir_Entry.get()
         self.filename = f'{self.fileName_Entry.get()}{self.file_ext[1:-1]}'
         try:
-            asyncio.run(Youtube.download_stream(
+            self.func = asyncio.run(Youtube.download_stream(
                 self=self, itag=self.itag, path_dir=self.path, filename=self.filename))
-            messagebox.showinfo(
-                message=f'File Downloaded Successfully in {self.path}')
+            if self.func:
+                messagebox.showinfo(
+                    message=f'File Downloaded Successfully in {self.path}')
+            else:
+                messagebox.showinfo(
+                    message=f'File is exist {self.path}')
         except PermissionError as e:
             messagebox.showerror(
                 'Error', message='Download failed\ntry to change download path in settings')
-            raise e
+            Exc.error_log(f'Video Failed ({e})')
+        except Exception as x:
+            messagebox.showerror(
+                'Error', message=f'Download failed\nError:{x}')
+            Exc.error_log(f'Video Failed ({x})')
+            raise x
 
     def dl_thumbnail(self):
         try:
@@ -490,6 +503,7 @@ class Root(cust.CTk):
         if not self.URL_entryField.get():  # if entry was empty
             messagebox.showerror(
                 message='URL field is empty            ', title='Error')
+            Exc.error_log(f'Video Failed ({e})')
         else:
             try:
                 try:
