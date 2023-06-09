@@ -1,19 +1,20 @@
 import os
-from Exc import Exc
-from images import Images
-from time import strftime, gmtime
-from settings import Settings
 import asyncio
 import threading
 import webbrowser
-from current_path import current_path, download_default_path
 import customtkinter as cust
+from Exc import Exc
+from re import search
 from PIL import Image
 from io import BytesIO
-from tkinter import messagebox, Menu
-from pytube import YouTube
 from requests import get
+from images import Images
+from pytube import YouTube
+from settings import Settings
+from time import strftime, gmtime
+from tkinter import messagebox, Menu
 from moviepy.video.io.VideoFileClip import VideoFileClip
+from paths import current_path, download_default_path, check_download_path
 # -----------Main class--------------
 '''
 https://youtu.be/17NLNg6v1qg
@@ -32,11 +33,12 @@ class Youtube(YouTube):
 
     def __init__(self, **kwargs):
         super().__init__(Youtube.url)
-        Youtube.url = ''
+
+        Youtube.url: str
 
     async def write(self):
         await Youtube.get_video_info(self)
-        global video_thumbnail, streams_dict, video_dict, audio_dict
+        global video_thumbnail, streams_dict, audio_dict, video_dict
         streams_dict = {}
         video_dict = {}
         audio_dict = {}
@@ -49,7 +51,6 @@ class Youtube(YouTube):
         for audio in audio_streams:
             if audio.mime_type[6:] == 'mp4':
                 streams_dict.update([(f'{audio.abr} (.mp3)', audio.itag)])
-            if audio.mime_type[6:] == 'mp4':
                 audio_dict.update([(f'{audio.abr} (.mp3)', audio.itag)])
         thumbnail_response = get(video_thumbnail_url)
         video_thumbnail = Image.open(BytesIO(thumbnail_response.content))
@@ -57,7 +58,8 @@ class Youtube(YouTube):
             video_thumbnail.width//2, video_thumbnail.height//2), resample=Image.Resampling.LANCZOS)
 
     async def get_video_info(self):
-        global video_title, video_length, video_views, video_channel, video_publish, video_streams, audio_streams, video_thumbnail_url
+        global video_title, video_length, video_views, video_channel, video_publish, video_streams, audio_streams, video_thumbnail_url, video_url
+        video_url = self.url
         video_title = self.title
         video_views = self.views
         video_channel = self.author
@@ -68,11 +70,9 @@ class Youtube(YouTube):
         audio_streams = self.streams.filter(type='audio').order_by('abr')
         video_thumbnail_url = self.thumbnail_url
 
-    async def download_stream(self, itag, type):
-        if type == 'audio':
-            await YouTube(Youtube.url).streams.get_by_itag(itag=itag).download(output_path=Root.settings_audioDir_Entry.get(), filename=Root.videoName_Entry.get())
-        elif type == 'video':
-            await YouTube(Youtube.url).streams.get_by_itag(itag=itag).download(output_path=Root.settings_videoDir_Entry.get(), filename=Root.videoName_Entry.get())
+    async def download_stream(self, itag, path_dir, filename):
+        YouTube(url=video_url).streams.get_by_itag(itag=itag).download(
+            output_path=path_dir, filename=filename)
 
 
 class Root(cust.CTk):
@@ -81,7 +81,7 @@ class Root(cust.CTk):
     def __init__(self, **kwargs):
         super().__init__()
         self.title('Yvai')
-        self._windows_set_titlebar_color('#232F34')
+        check_download_path()
         self.after(0, lambda: self.state('zoomed'))
         self.grid_columnconfigure(1, weight=4)
         self.grid_rowconfigure(0, weight=1)
@@ -270,6 +270,10 @@ class Root(cust.CTk):
     def about_button_event(self):
         self.select_frame_by_name("about")
 
+    def get_ext(self, stream):
+        ext = search(r'\(([\.].*)\)', stream)
+        return ext.group()
+
     def paste_URL(self):
         global data
         data = self.clipboard_get()
@@ -316,8 +320,11 @@ class Root(cust.CTk):
                                  self.settings_audioDir_Entry, self.settings_thumbnailDir_Entry]
         for i in settings_Entries_list:
             i.delete(0, cust.END)
-            i.insert(index=0, string=Settings.read_settings()
-                     [settings_Entries_list.index(i)])
+            try:
+                i.insert(index=0, string=Settings.read_settings()
+                         [settings_Entries_list.index(i)])
+            except Exception as e:
+                check_download_path()
 
     def show_info(self):
         self.tkinterImage_video_thumbnail = cust.CTkImage(light_image=video_thumbnail,
@@ -400,17 +407,18 @@ class Root(cust.CTk):
         self.videoName_Label = cust.CTkLabel(
             self.videoName_Frame, text="File name   :    ", text_color='#eee', font=cust.CTkFont('Tajawal', weight='bold'))
         self.videoName_Label.grid(column=0, row=0, sticky='e', padx=37)
-        self.videoName_Entry = cust.CTkEntry(
+        self.fileName_Entry = cust.CTkEntry(
             self.videoName_Frame, justify='center', height=35, text_color='#eee', width=self.URL_entryField.winfo_width(), textvariable=self.videoName_stringVar)
-        self.videoName_Entry.grid(column=1, row=0, sticky='w', pady=10)
-        self.videoName_Button = cust.CTkButton(self.videoName_Entry, text='Default', height=5, fg_color=self.URL_entryField._fg_color, bg_color='transparent', border_spacing=8, border_color=self.URL_entryField._border_color,
+        self.fileName_Entry.grid(column=1, row=0, sticky='w', pady=10)
+        self.videoName_Button = cust.CTkButton(self.fileName_Entry, text='Default', height=5, fg_color=self.URL_entryField._fg_color, bg_color='transparent', border_spacing=8, border_color=self.URL_entryField._border_color,
                                                border_width=2, width=8, corner_radius=self.URL_entryField._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.set_default)
         self.videoName_Button.grid(row=0, column=1, sticky='e')
         self.write_video_streamsMenusettings()
 
     def set_default(self):
-        self.videoName_Entry.delete(0, cust.END)
-        self.videoName_Entry.insert(index=0, string=self.videoName_stringVar)
+        self.fileName_Entry.delete(0, cust.END)
+        self.fileName_Entry.insert(
+            index=0, string=Exc.replace_invalid_char(video_title))
         self.update_idletasks()
 
     def write_video_streamsMenusettings(self):
@@ -422,27 +430,27 @@ class Root(cust.CTk):
 
     def checking_decorator(func):
         def check_download_options(self):
-            self.default_border = self.videoName_Entry.cget('border_color')
+            self.default_border = self.fileName_Entry.cget('border_color')
             if self.download_menu.get() == 'Choose download option':
                 self.download_menu.configure(button_color='red')
                 self.update_idletasks()
-            if self.videoName_Entry.get() == '':
-                self.videoName_Entry.configure(border_color='red')
+            if self.fileName_Entry.get() == '':
+                self.fileName_Entry.configure(border_color='red')
                 self.update_idletasks()
             else:
-                for i in self.videoName_Entry.get():
+                for i in self.fileName_Entry.get():
                     if i in Exc.invalid_char:
-                        self.videoName_Entry.configure(border_color='red')
+                        self.fileName_Entry.configure(border_color='red')
                         self.update_idletasks()
                         break
-            if self.download_menu.cget('button_color') == 'red' or self.videoName_Entry.cget('border_color') == 'red':
-                self.after(1500, self.videoName_Entry.configure(
+            if self.download_menu.cget('button_color') == 'red' or self.fileName_Entry.cget('border_color') == 'red':
+                self.after(1500, self.fileName_Entry.configure(
                     border_color=self.default_border))
                 self.after(0, self.download_menu.configure(
                     button_color='#4A6572'))
                 return 0
             else:
-                self.after(1500, self.videoName_Entry.configure(
+                self.after(1500, self.fileName_Entry.configure(
                     border_color=self.default_border))
                 self.after(0, self.download_menu.configure(
                     button_color='#4A6572'))
@@ -454,9 +462,17 @@ class Root(cust.CTk):
     def dl_video(self):
         self.option_choosen = self.download_menu.get()
         self.itag = streams_dict[self.option_choosen]
-        self.type = 'video' if self.download_menu.get() in video_dict else 'audio'
-        asyncio.run(Youtube.download_stream(
-            self=Youtube(), itag=self.itag, type=self.type))
+        self.file_ext = self.get_ext(self.option_choosen[1:-1])
+        self.path = self.settings_videoDir_Entry.get(
+        ) if self.option_choosen in video_dict else self.settings_audioDir_Entry.get()
+        self.filename = f'{self.fileName_Entry.get()}{self.file_ext[1:-1]}'
+        try:
+            asyncio.run(Youtube.download_stream(
+                self=self, itag=self.itag, path_dir=self.path, filename=self.filename))
+        except PermissionError as e:
+            messagebox.showerror(
+                'Error', message='Download failed\ntry to change download path in settings')
+            raise e
 
     def dl_thumbnail(self):
         try:
@@ -488,7 +504,7 @@ class Root(cust.CTk):
                 self.fetching_label.grid_forget()
                 self.update_idletasks()
             except Exception as e:
-                if e in Exc.Internet_ExcList:
+                if e == Exc.Internet_Error:
                     self.fetching_label.grid_forget()
                     self.update_idletasks()
                     messagebox.showerror(
