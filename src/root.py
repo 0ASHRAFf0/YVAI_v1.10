@@ -1,6 +1,6 @@
-import os,sys
+import os
+import sys
 import asyncio
-import threading
 import webbrowser
 import customtkinter as cust
 from Exc import Exc
@@ -11,10 +11,9 @@ from requests import get
 from images import Images
 from pytube import YouTube
 from settings import Settings
+from tkinter import messagebox
 from time import strftime, gmtime
-from tkinter import messagebox, Menu
-from moviepy.video.io.VideoFileClip import VideoFileClip
-from paths import current_path, download_default_path, check_download_path
+from paths import current_path, download_default_path, image_path, check_download_path
 # -----------Main class--------------
 ''''
 https://youtu.be/17NLNg6v1qg
@@ -73,11 +72,12 @@ class Youtube(YouTube):
         video_thumbnail_url = self.thumbnail_url
 
     async def download_stream(self, itag, path_dir, filename):
-        if not YouTube(url=video_url,on_progress_callback=None).streams.get_by_itag(itag=itag).exists_at_path(rf'{path_dir}\{filename}'):
+        if not YouTube(url=video_url).streams.get_by_itag(itag=itag).exists_at_path(rf'{path_dir}\{filename}'):
             YouTube(url=video_url).streams.get_by_itag(itag=itag).download(
                 output_path=path_dir, filename=filename)
             return 1
         return 0
+
 
 class Root(cust.CTk):
     """Main Class Of App (Root Of App)"""
@@ -112,6 +112,15 @@ class Root(cust.CTk):
                                            fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), font=cust.CTkFont('Tajawal', weight='bold'),
                                            anchor="w", command=self.about_button_event)
         self.about_button.grid(row=6, column=0, sticky="ew", pady=10)
+        # about page init
+        self.about_frame = cust.CTkFrame(
+            self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
+        self.about_frame.grid_rowconfigure(0, weight=4)
+        self.about_frame.grid_rowconfigure(1, weight=2)
+        self.about_frame.grid_rowconfigure(2, weight=6)
+        self.about_image_frame = cust.CTkFrame(
+            self.about_frame, fg_color='transparent')
+        self.about_image_frame.grid_propagate(0)
         # settings Frame init
         self.settings_frame = cust.CTkScrollableFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
@@ -195,8 +204,6 @@ class Root(cust.CTk):
         self.youtube_frame.grid_rowconfigure(2, weight=3)
         self.youtube_frame.grid_columnconfigure(0, weight=1)
         self.youtube_frame.grid(row=0, column=1, sticky="nsew")
-        self.about_frame = cust.CTkFrame(
-            self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
 
         # URL(Youtube) frame init
         self.URL_frame = cust.CTkFrame(
@@ -231,7 +238,7 @@ class Root(cust.CTk):
                                         border_width=2, width=8, corner_radius=self.URL_entryField._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
         self.URL_paste.grid(row=0, column=1, sticky='e', padx=1)
         self.fetching_label = cust.CTkLabel(
-            self.URL_frame, text='Fetching video data...', text_color='#b22222', font=cust.CTkFont('Helvatica', size=15, slant='italic'))
+            self.URL_frame, text='Fetching video data...', text_color='#b22222', font=cust.CTkFont('Helvatica', size=15, slant='italic', weight='bold'))
 
         # info frame init
         self.info_frame = cust.CTkFrame(
@@ -396,6 +403,16 @@ class Root(cust.CTk):
                                                 dropdown_fg_color='#232F34', dropdown_text_color='#eee', font=cust.CTkFont('Tajawal'), dropdown_font=cust.CTkFont('Tajawal'), hover='#4A6572', dropdown_hover_color='#4A6572')
         self.download_button.grid(row=0, column=1, sticky='w', padx=(20, 0))
         self.download_menu.grid(row=0, column=0, sticky='e', padx=(0, 20))
+        # init progress bar
+        self.openDir_Frame = cust.CTkFrame(
+            self.download_frame, fg_color='transparent', height=15)
+        self.openDir_Frame.grid_columnconfigure(0, weight=1)
+        self.openDir_Frame.grid_columnconfigure(1, weight=3)
+        self.openDir_Frame.grid_columnconfigure(2, weight=2)
+        self.openDir_Frame.grid_rowconfigure(0, weight=1)
+        self.openDir_Frame.grid(row=2, column=0, sticky='ew')
+        self.openDir_button = cust.CTkButton(self.openDir_Frame, text='Open download location', height=35, command=self.open_dl_dir, fg_color='#F9AA33',
+                                             border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'), text_color_disabled='gray40')
 
 
 # Video Entry Init
@@ -424,6 +441,9 @@ class Root(cust.CTk):
         self.fileName_Entry.insert(
             index=0, string=Exc.replace_invalid_char(video_title))
         self.update_idletasks()
+
+    def open_dl_dir(self):
+        os.startfile(rf'{self.path}')
 
     def write_video_streamsMenusettings(self):
         self.stream_options_list = []
@@ -476,8 +496,9 @@ class Root(cust.CTk):
             if self.func:
                 messagebox.showinfo(
                     message=f'File Downloaded Successfully in {self.path}')
+                self.openDir_button.grid(row=0, column=1)
             else:
-                messagebox.showinfo(
+                messagebox.showwarning(
                     message=f'File is exist {self.path}')
         except PermissionError as e:
             messagebox.showerror(
@@ -519,56 +540,55 @@ class Root(cust.CTk):
                 self.show_dl_settings()
                 self.fetching_label.grid_forget()
                 self.update_idletasks()
+            except Exc.Internet_Error as e:
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
+                messagebox.showerror(
+                    message='Check internet connection and try again', title='Error')
+                Exc.error_log(f'Video Failed ({e})')
+            except Exc.ageRestricted_Error as e:
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
+                messagebox.showerror(
+                    message='The Video is age restricted, can\'t be accessed ', title='Error')
+                Exc.error_log(f'Video Failed ({e})')
+            except Exc.stream_Error as e:
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
+                messagebox.showerror(
+                    message='The Video is a live stream, it\'s not downloadable', title='Error')
+                Exc.error_log(f'Video Failed ({e})')
+            except Exc.videoMembersOnly_Error as e:
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
+                messagebox.showerror(
+                    message='The Video is members only, can\'t be accessed ', title='Error')
+                Exc.error_log(f'Video Failed ({e})')
+            except Exc.videoPrivate_Error as e:
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
+                messagebox.showerror(
+                    message='The Video is Private', title='Error')
+                Exc.error_log(f'Video Failed ({e})')
+            except Exc.videoRegionBlocked_Error as e:
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
+                messagebox.showerror(
+                    message='The Video is unavailable in your region', title='Error')
+                Exc.error_log(f'Video Failed ({e})')
+            except Exc.videoUnavailable_Error as e:
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
+                messagebox.showerror(
+                    message='The Video is unavailable', title='Error')
+                Exc.error_log(f'Video Failed ({e})')
             except Exception as e:
-                if e == Exc.Internet_Error:
-                    self.fetching_label.grid_forget()
-                    self.update_idletasks()
-                    messagebox.showerror(
-                        message='Check internet connection and try again', title='Error')
-                    Exc.error_log(f'Video Failed ({e})')
-                elif e == Exc.ageRestricted_Error:
-                    self.fetching_label.grid_forget()
-                    self.update_idletasks()
-                    messagebox.showerror(
-                        message='The Video is age restricted, can\'t be accessed ', title='Error')
-                    Exc.error_log(f'Video Failed ({e})')
-                elif e == Exc.stream_Error:
-                    self.fetching_label.grid_forget()
-                    self.update_idletasks()
-                    messagebox.showerror(
-                        message='The Video is a live stream, it\'s not downloadable', title='Error')
-                    Exc.error_log(f'Video Failed ({e})')
-                elif e == Exc.videoMembersOnly_Error:
-                    self.fetching_label.grid_forget()
-                    self.update_idletasks()
-                    messagebox.showerror(
-                        message='The Video is members only, can\'t be accessed ', title='Error')
-                    Exc.error_log(f'Video Failed ({e})')
-                elif e == Exc.videoPrivate_Error:
-                    self.fetching_label.grid_forget()
-                    self.update_idletasks()
-                    messagebox.showerror(
-                        message='The Video is Private', title='Error')
-                    Exc.error_log(f'Video Failed ({e})')
-                elif e == Exc.videoRegionBlocked_Error:
-                    self.fetching_label.grid_forget()
-                    self.update_idletasks()
-                    messagebox.showerror(
-                        message='The Video is unavailable in your region', title='Error')
-                    Exc.error_log(f'Video Failed ({e})')
-                elif e == Exc.videoUnavailable_Error:
-                    self.fetching_label.grid_forget()
-                    self.update_idletasks()
-                    messagebox.showerror(
-                        message='The Video is unavailable', title='Error')
-                    Exc.error_log(f'Video Failed ({e})')
-                else:
-                    self.fetching_label.grid_forget()
-                    self.update_idletasks()
-                    messagebox.showerror(
-                        message='URL is invalid            ', title='Error')
-                    Exc.error_log(f'Video Failed ({e})')
-                    raise e
+                self.fetching_label.grid_forget()
+                self.update_idletasks()
+                messagebox.showerror(
+                    message='URL is invalid            ', title='Error')
+                Exc.error_log(f'Video Failed ({e})')
+                raise e
 
 
 if __name__ == "__main__":

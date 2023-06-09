@@ -1,7 +1,9 @@
 import os
 from settings import Settings
+from Exc import Exc
 current_path = os.path.dirname(os.path.realpath(__file__))
 download_default_path = rf'{current_path}\Downloads'
+image_path = rf'{current_path}\images'
 
 
 def check_download_path():
@@ -14,9 +16,11 @@ def check_download_path():
                                             audio_setting=download_default_path, thumb_setting=download_default_path)
                 except Exception as e:
                     pass
+                    Exc.error_log(msg=f'handling while starts : {e}')
             else:
                 try:
                     Settings.write_settings(vid_setting=download_default_path,
                                             audio_setting=download_default_path, thumb_setting=download_default_path)
                 except Exception as e:
                     pass
+                    Exc.error_log(msg=f'handling while starts : {e}')
