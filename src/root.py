@@ -1,30 +1,19 @@
 import os
-import sys
 import asyncio
-from webbrowser import open_new_tab
 import customtkinter as cust
 from Exc import Exc
-from re import search
 from PIL import Image
+from re import search
 from io import BytesIO
 from requests import get
 from images import Images
 from pytube import YouTube
 from settings import Settings
-from tkinter import messagebox, Tk as zzzz
+from tkinter import messagebox
 from time import strftime, gmtime
-from paths import current_path, download_default_path, image_path, check_download_path
+from webbrowser import open_new_tab
+from paths import check_download_path
 # -----------Main class--------------
-''''
-https://youtu.be/17NLNg6v1qg
-www.youtube.com/watch?v=oElol6JnT0w
-https://www.youtube.com/watch?v=PITSYsAEjF0
-
-#344955 center
-#232F34 darker
-#4A6572 lighter
-#F9AA33 yellow
-'''
 
 
 class Youtube(YouTube):
@@ -367,13 +356,13 @@ class Root(cust.CTk):
 
     def browse_dir(self, btn: cust.CTkButton):
         browsed_dir = cust.filedialog.askdirectory()
-        if btn.winfo_parent() == '.!ctkframe2.!canvas.!ctkscrollableframe.!ctkframe2':
+        if btn.winfo_parent() == '.!ctkframe3.!canvas.!ctkscrollableframe.!ctkframe2':
             self.settings_videoDir_Entry.delete(0, cust.END)
             self.settings_videoDir_Entry.insert(string=browsed_dir, index=0)
-        elif btn.winfo_parent() == '.!ctkframe2.!canvas.!ctkscrollableframe.!ctkframe3':
+        elif btn.winfo_parent() == '.!ctkframe3.!canvas.!ctkscrollableframe.!ctkframe3':
             self.settings_audioDir_Entry.delete(0, cust.END)
             self.settings_audioDir_Entry.insert(string=browsed_dir, index=0)
-        elif btn.winfo_parent() == '.!ctkframe2.!canvas.!ctkscrollableframe.!ctkframe4':
+        elif btn.winfo_parent() == '.!ctkframe3.!canvas.!ctkscrollableframe.!ctkframe4':
             self.settings_thumbnailDir_Entry.delete(0, cust.END)
             self.settings_thumbnailDir_Entry.insert(
                 string=browsed_dir, index=0)
@@ -561,27 +550,26 @@ class Root(cust.CTk):
                 self=self, itag=self.itag, path_dir=self.path, filename=self.filename))
             if self.func:
                 messagebox.showinfo(
-                    message=f'File Downloaded Successfully in {self.path}')
+                    message=f'File Downloaded Successfully in {self.path}', title='Downloaded')
                 self.openDir_button.grid(row=0, column=1)
             else:
                 messagebox.showwarning(
-                    message=f'File is exist {self.path}')
+                    message=f'File is exist {self.path}', title='Warning')
         except PermissionError as e:
             messagebox.showerror(
-                'Error', message='Download failed\ntry to change download path in settings')
+                message='Download failed\ntry to change download path in settings', title='Error')
             Exc.error_log(f'Video Failed ({e})')
         except Exception as x:
             messagebox.showerror(
-                'Error', message=f'Download failed\nError:{x}')
+                message=f'Download failed\nError:{x}', title='Error')
             Exc.error_log(f'Video Failed ({x})')
-            raise x
 
     def dl_thumbnail(self):
         try:
             video_thumbnail.save(
                 rf"{self.settings_thumbnailDir_Entry.get()}\Thumbnail_{Exc.replace_invalid_char(video_title)}.png")
             messagebox.showinfo(
-                message=f'Thumbnail downloaded in "{self.settings_thumbnailDir_Entry.get()}"')
+                message=f'Thumbnail downloaded in "{self.settings_thumbnailDir_Entry.get()}"', title='Downloaded')
         except Exception as e:
             messagebox.showerror(message=f'Download failed', title='Error')
             Exc.error_log(f'Thumbnail Failed ({e})')
@@ -654,7 +642,6 @@ class Root(cust.CTk):
                 messagebox.showerror(
                     message='URL is invalid            ', title='Error')
                 Exc.error_log(f'Video Failed ({e})')
-                raise e
 
 
 if __name__ == "__main__":

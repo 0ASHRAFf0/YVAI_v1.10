@@ -1,7 +1,6 @@
-from pytube import exceptions
-from requests.exceptions import ConnectionError, HTTPError, Timeout, ReadTimeout
-import urllib.error
 import logging
+import urllib.error
+from pytube import exceptions
 logging.basicConfig(filename='error_log.log', filemode='a',
                     format='%(asctime)s: %(name)s, %(levelname)s : %(message)s')
 

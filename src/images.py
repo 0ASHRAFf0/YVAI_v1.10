@@ -1,7 +1,7 @@
-import os
-from customtkinter import CTkImage
+
 from PIL import Image
-from paths import current_path, download_default_path, image_path
+from customtkinter import CTkImage
+from paths import current_path, image_path
 
 
 class Images():

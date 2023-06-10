@@ -1,7 +1,4 @@
 import os
-import datetime
-
-
 crnt_path = os.path.dirname(os.path.realpath(__file__))
 
 
