@@ -338,7 +338,7 @@ class Root(cust.CTk):
         open_new_tab('https://www.facebook.com/m.ashraff6/')
 
     def open_instagram(self):
-        open_new_tab('https://www.instagram.com/a4rafff')
+        open_new_tab('https://www.instagram.com/a4rafff/')
 
     def paste_URL(self):
         global data
@@ -458,7 +458,7 @@ class Root(cust.CTk):
                                                 dropdown_fg_color='#232F34', dropdown_text_color='#eee', font=cust.CTkFont('Tajawal'), dropdown_font=cust.CTkFont('Tajawal'), hover='#4A6572', dropdown_hover_color='#4A6572')
         self.download_button.grid(row=0, column=1, sticky='w', padx=(20, 0))
         self.download_menu.grid(row=0, column=0, sticky='e', padx=(0, 20))
-        # init progress bar
+        # init open_dir, Downloading... label
         self.openDir_Frame = cust.CTkFrame(
             self.download_frame, fg_color='transparent', height=15)
         self.openDir_Frame.grid_columnconfigure(0, weight=1)
@@ -468,8 +468,6 @@ class Root(cust.CTk):
         self.openDir_Frame.grid(row=2, column=0, sticky='ew')
         self.openDir_button = cust.CTkButton(self.openDir_Frame, text='Open download location', height=35, command=self.open_dl_dir, fg_color='#F9AA33',
                                              border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'), text_color_disabled='gray40')
-
-
 # Video Entry Init
         self.videoName_stringVar = cust.StringVar(
             value=Exc.replace_invalid_char(video_title))
@@ -552,6 +550,7 @@ class Root(cust.CTk):
                 messagebox.showinfo(
                     message=f'File Downloaded Successfully in {self.path}', title='Downloaded')
                 self.openDir_button.grid(row=0, column=1)
+                self.update_idletasks()
             else:
                 messagebox.showwarning(
                     message=f'File is exist {self.path}', title='Warning')

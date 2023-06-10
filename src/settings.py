@@ -12,5 +12,8 @@ class Settings():
 
     @staticmethod
     def read_settings():
+        if not os.path.isfile(rf'{crnt_path}\settings.txt'):
+            with open(rf'{crnt_path}\settings.txt', 'w') as Op_file:
+                pass
         with open(rf'{crnt_path}\settings.txt', 'r') as Op_file:
             return (Op_file.readline()).split('|')
