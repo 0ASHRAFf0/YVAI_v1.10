@@ -1,7 +1,7 @@
 import os
 import sys
 import asyncio
-import webbrowser
+from webbrowser import open_new_tab
 import customtkinter as cust
 from Exc import Exc
 from re import search
@@ -11,7 +11,7 @@ from requests import get
 from images import Images
 from pytube import YouTube
 from settings import Settings
-from tkinter import messagebox
+from tkinter import messagebox, Tk as zzzz
 from time import strftime, gmtime
 from paths import current_path, download_default_path, image_path, check_download_path
 # -----------Main class--------------
@@ -85,6 +85,7 @@ class Root(cust.CTk):
     def __init__(self, **kwargs):
         super().__init__()
         self.title('Yvai')
+        self.iconbitmap(Images.yvai_icon)
         check_download_path()
         self.after(0, lambda: self.state('zoomed'))
         self.grid_columnconfigure(1, weight=4)
@@ -95,32 +96,91 @@ class Root(cust.CTk):
             self, corner_radius=0, fg_color='#232F34')
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
         self.navigation_frame.grid_rowconfigure(4, weight=1)
-        self.navigation_frame_label = cust.CTkLabel(self.navigation_frame, text="Y  V  A  I",
-                                                    compound="left", font=cust.CTkFont('Tajawal', weight='bold', size=20))
+        self.navigation_frame_label = cust.CTkLabel(self.navigation_frame, text="Y  V  A  I", image=Images.yvai_image,
+                                                    compound="bottom", font=cust.CTkFont('Tajawal', weight='bold', size=20))
         self.navigation_frame_label.grid(row=0, column=0, padx=5, pady=50)
 
         # Nav Buttons Init
 
-        self.youtube_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Youtube", fg_color="transparent", text_color=(
+        self.youtube_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Youtube", image=Images.youtube_image, fg_color="transparent", text_color=(
             "gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), anchor="w", font=cust.CTkFont('Tajawal', weight='bold', size=14), command=self.youtube_button_event)
         self.youtube_button.grid(row=1, column=0, sticky="ew", pady=15)
-        self.settings_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Settings",
+        self.settings_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Settings", image=Images.settings_image,
                                               fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), font=cust.CTkFont('Tajawal', weight='bold'),
                                               anchor="w", command=self.setting_button_event)
         self.settings_button.grid(row=5, column=0, sticky="ew", pady=10)
-        self.about_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="About",
+        self.about_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="About", image=Images.about_image,
                                            fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("#4A6572", "#4A6572"), font=cust.CTkFont('Tajawal', weight='bold'),
                                            anchor="w", command=self.about_button_event)
         self.about_button.grid(row=6, column=0, sticky="ew", pady=10)
         # about page init
         self.about_frame = cust.CTkFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
-        self.about_frame.grid_rowconfigure(0, weight=4)
-        self.about_frame.grid_rowconfigure(1, weight=2)
-        self.about_frame.grid_rowconfigure(2, weight=6)
-        self.about_image_frame = cust.CTkFrame(
+        self.about_frame.grid_columnconfigure(0, weight=1)
+        self.about_frame.grid_rowconfigure(0, weight=1)
+        self.about_frame.grid_rowconfigure(1, weight=1)
+        self.about_contact_frame = cust.CTkFrame(
             self.about_frame, fg_color='transparent')
-        self.about_image_frame.grid_propagate(0)
+        self.about_contact_frame.grid_columnconfigure(0, weight=1)
+        self.about_contact_frame.grid_rowconfigure(0, weight=1)
+        self.about_contact_frame.grid_rowconfigure(1, weight=1)
+        self.about_contact_frame.grid_rowconfigure(2, weight=1)
+        self.about_contact_frame.grid(row=0, column=0, sticky='nsew')
+        ##########################################################
+        self.about_developer_frame = cust.CTkFrame(
+            self.about_contact_frame, fg_color='transparent')
+        self.about_developer_frame.grid_rowconfigure(0, weight=1)
+        self.about_developer_frame.grid_rowconfigure(1, weight=1)
+        self.about_developer_frame.grid_columnconfigure(0, weight=1)
+        self.about_developer_frame.grid(
+            row=1, column=0, sticky='w', padx=40)
+        self.developer_label = cust.CTkLabel(self.about_developer_frame, text_color='#eee',
+                                             text='Development:', font=cust.CTkFont('Tajawal', weight='bold', size=17))
+        self.developer_label.grid(row=0, column=0, sticky='w', pady=5)
+        self.mohamed_label = cust.CTkLabel(self.about_developer_frame, text_color='#eee',
+                                           text='\tMohamed Ashraf', font=cust.CTkFont('Tajawal', weight="normal", size=15))
+        self.mohamed_label.grid(row=1, column=0)
+        #############################################################
+        self.about_version_frame = cust.CTkFrame(
+            self.about_contact_frame, fg_color='transparent')
+        self.about_version_frame.grid_rowconfigure(0, weight=1)
+        self.about_version_frame.grid_rowconfigure(1, weight=1)
+        self.about_version_frame.grid_rowconfigure(2, weight=1)
+        self.about_version_frame.grid_columnconfigure(0, weight=1)
+        self.about_version_frame.grid(
+            row=2, column=0, sticky='w', padx=40)
+        self.version_label = cust.CTkLabel(self.about_version_frame, justify='left', text_color='#eee',
+                                           text='Version:', font=cust.CTkFont('Tajawal', weight='bold', size=17))
+        self.version_label.grid(row=0, column=0, sticky='w', pady=5)
+        self.yvai_version_label = cust.CTkLabel(self.about_version_frame, justify='left', text_color='#eee',
+                                                text='\tYVAI v1.10.0', font=cust.CTkFont('Tajawal', weight="normal", size=15))
+        self.yvai_version_label.grid(row=1, column=0, sticky='w')
+        self.yvai_note_label = cust.CTkLabel(self.about_version_frame, text_color='#eee', justify='left',
+                                             text='\t*YVAI is still under development and will be constantly updated', font=cust.CTkFont('Tajawal', weight="normal", size=12))
+        self.yvai_note_label.grid(row=2, column=0)
+        ###########################################################################
+        self.social_frame = cust.CTkFrame(
+            self.about_contact_frame, fg_color='transparent')
+        self.social_frame.grid_rowconfigure(0, weight=1)
+        self.social_frame.grid_rowconfigure(1, weight=1)
+        self.social_frame.grid_rowconfigure(2, weight=1)
+        self.social_frame.grid_columnconfigure(0, weight=1)
+        self.social_frame.grid(
+            row=3, column=0, sticky='w', padx=40)
+        self.contact_label = cust.CTkLabel(self.social_frame, text_color='#eee',
+                                           text='Contact:', font=cust.CTkFont('Tajawal', weight='bold', size=17))
+        self.contact_label.grid(row=0, column=0, pady=5, sticky='w')
+        self.facebook_label = cust.CTkLabel(self.social_frame, text_color='#0000EE', text='\tFacebook', font=cust.CTkFont(
+            'Helvatica', weight='normal', size=17, slant='italic', underline=True), cursor='hand2')
+        self.facebook_label.bind(
+            "<Button-1>", command=lambda x: self.open_facebook())
+        self.facebook_label.grid(row=1, column=0)
+        self.instagram_label = cust.CTkLabel(self.social_frame, text_color='#0000EE', text='\tInstagram', font=cust.CTkFont(
+            'Helvatica', weight="normal", size=15, slant='italic', underline=True), cursor='hand2')
+        self.instagram_label.bind(
+            "<Button-1>", command=lambda x: self.open_instagram())
+        self.instagram_label.grid(row=2, column=0)
+
         # settings Frame init
         self.settings_frame = cust.CTkScrollableFrame(
             self, corner_radius=10, fg_color='#344955', bg_color='#232F34')
@@ -154,7 +214,7 @@ class Root(cust.CTk):
         self.settings_videoDir_Entry = cust.CTkEntry(
             self.settings_videoDir_Frame, justify='center', height=35, width=400, text_color='#eee', textvariable=None)
         self.settings_videoDir_Entry.grid(column=1, row=0, sticky='w', pady=10)
-        self.settings_videoDir_button = cust.CTkButton(self.settings_videoDir_Entry, text='Browse', height=5, fg_color=self.settings_videoDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.settings_videoDir_Entry._border_color,
+        self.settings_videoDir_button = cust.CTkButton(self.settings_videoDir_Entry, text='Browse', height=5, fg_color=self.settings_videoDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.settings_videoDir_Entry._border_color, hover_color='#4A6572',
                                                        border_width=2, width=8, corner_radius=self.settings_videoDir_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=lambda: self.browse_dir(btn=self.settings_videoDir_Entry))
         self.settings_videoDir_button.grid(row=0, column=1, sticky='e')
     # Audio Dir settings Init
@@ -172,7 +232,7 @@ class Root(cust.CTk):
         self.settings_audioDir_Entry = cust.CTkEntry(
             self.settings_audioDir_Frame, justify='center', height=35, width=400, text_color='#eee', textvariable=None)
         self.settings_audioDir_Entry.grid(column=1, row=0, sticky='w', pady=10)
-        self.settings_audioDir_button = cust.CTkButton(self.settings_audioDir_Entry, text='Browse', height=5, fg_color=self.settings_audioDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.settings_audioDir_Entry._border_color,
+        self.settings_audioDir_button = cust.CTkButton(self.settings_audioDir_Entry, text='Browse', height=5, fg_color=self.settings_audioDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.settings_audioDir_Entry._border_color, hover_color='#4A6572',
                                                        border_width=2, width=8, corner_radius=self.settings_audioDir_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=lambda: self.browse_dir(btn=self.settings_audioDir_Entry))
         self.settings_audioDir_button.grid(row=0, column=1, sticky='e')
     # Audio Dir settings Init
@@ -191,7 +251,7 @@ class Root(cust.CTk):
             self.settings_thumbnailDir_Frame, justify='center', height=35, width=400, text_color='#eee', textvariable=None)
         self.settings_thumbnailDir_Entry.grid(
             column=1, row=0, sticky='w', pady=10)
-        self.settings_thumbnailDir_button = cust.CTkButton(self.settings_thumbnailDir_Entry, text='Browse', height=5, fg_color=self.settings_thumbnailDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.settings_thumbnailDir_Entry._border_color,
+        self.settings_thumbnailDir_button = cust.CTkButton(self.settings_thumbnailDir_Entry, text='Browse', height=5, fg_color=self.settings_thumbnailDir_Entry._fg_color, bg_color='transparent', border_spacing=8, border_color=self.settings_thumbnailDir_Entry._border_color, hover_color='#4A6572',
                                                            border_width=2, width=8, corner_radius=self.settings_thumbnailDir_Entry._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=lambda: self.browse_dir(btn=self.settings_thumbnailDir_Entry))
         self.settings_thumbnailDir_button.grid(row=0, column=1, sticky='e')
 
@@ -234,7 +294,7 @@ class Root(cust.CTk):
         self.URL_button = cust.CTkButton(
             self.URL_frame, text='Start', height=35, command=self.url_func, fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'))
         self.URL_button.grid(row=0, column=2, sticky='w', padx=10)
-        self.URL_paste = cust.CTkButton(self.URL_frame, text='Paste', height=5, fg_color=self.URL_entryField._fg_color, bg_color='transparent', border_spacing=8, border_color=self.URL_entryField._border_color,
+        self.URL_paste = cust.CTkButton(self.URL_frame, text='Paste', height=5, fg_color=self.URL_entryField._fg_color, bg_color='transparent', border_spacing=8, border_color=self.URL_entryField._border_color, hover_color='#4A6572',
                                         border_width=2, width=8, corner_radius=self.URL_entryField._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.paste_URL)
         self.URL_paste.grid(row=0, column=1, sticky='e', padx=1)
         self.fetching_label = cust.CTkLabel(
@@ -284,6 +344,12 @@ class Root(cust.CTk):
     def get_ext(self, stream):
         ext = search(r'\(([\.].*)\)', stream)
         return ext.group()
+
+    def open_facebook(self):
+        open_new_tab('https://www.facebook.com/m.ashraff6/')
+
+    def open_instagram(self):
+        open_new_tab('https://www.instagram.com/a4rafff')
 
     def paste_URL(self):
         global data
@@ -431,7 +497,7 @@ class Root(cust.CTk):
         self.fileName_Entry = cust.CTkEntry(
             self.videoName_Frame, justify='center', height=35, text_color='#eee', width=self.URL_entryField.winfo_width(), textvariable=self.videoName_stringVar)
         self.fileName_Entry.grid(column=1, row=0, sticky='w', pady=10)
-        self.videoName_Button = cust.CTkButton(self.fileName_Entry, text='Default', height=5, fg_color=self.URL_entryField._fg_color, bg_color='transparent', border_spacing=8, border_color=self.URL_entryField._border_color,
+        self.videoName_Button = cust.CTkButton(self.fileName_Entry, text='Default', height=5, fg_color=self.URL_entryField._fg_color, bg_color='transparent', border_spacing=8, border_color=self.URL_entryField._border_color, hover_color='#4A6572',
                                                border_width=2, width=8, corner_radius=self.URL_entryField._corner_radius, font=cust.CTkFont(family='Helvatica', size=13, weight='bold'), command=self.set_default)
         self.videoName_Button.grid(row=0, column=1, sticky='e')
         self.write_video_streamsMenusettings()
