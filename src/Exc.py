@@ -14,6 +14,7 @@ class Exc():
     videoPrivate_Error = exceptions.VideoPrivate
     videoRegionBlocked_Error = exceptions.VideoRegionBlocked
     videoMembersOnly_Error = exceptions.MembersOnly
+    fileNotFound = FileNotFoundError
 
     @staticmethod
     def error_log(err):

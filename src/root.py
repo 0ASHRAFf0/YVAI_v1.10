@@ -332,7 +332,7 @@ class Root(cust.CTk):
 
     def get_ext(self, stream):
         ext = search(r'\(([\.].*)\)', stream)
-        return ext.group()
+        return ext.group()  # type: ignore
 
     def open_facebook(self):
         open_new_tab('https://www.facebook.com/m.ashraff6/')
@@ -368,16 +368,25 @@ class Root(cust.CTk):
                 string=browsed_dir, index=0)
 
     def save_settings(self):
-        vid_Op_get = self.settings_videoDir_Entry.get()
-        audio_Op_get = self.settings_audioDir_Entry.get()
-        thumbnail_Op_get = self.settings_thumbnailDir_Entry.get()
-        for i in [vid_Op_get, audio_Op_get, thumbnail_Op_get]:
-            if not os.path.isdir(i):
-                messagebox.showwarning(
-                    title='Error', message=f'Unknown dir : {i}\nSettings Unsaved')
-                return 0
+        vid_Op = self.settings_videoDir_Entry
+        audio_Op = self.settings_audioDir_Entry
+        thumbnail_Op = self.settings_thumbnailDir_Entry
+        for i in [vid_Op, audio_Op, thumbnail_Op]:
+            if not os.path.isdir(i.get()):
+                if i == vid_Op:
+                    messagebox.showwarning(
+                        title='Error', message=f'Settings Unsaved\nUnknown video dir: {i.get()}')
+                    return 0
+                elif i == audio_Op:
+                    messagebox.showwarning(
+                        title='Error', message=f'Settings Unsaved\nUnknown audio dir: {i.get()}')
+                    return 0
+                elif i == thumbnail_Op:
+                    messagebox.showwarning(
+                        title='Error', message=f'Settings Unsaved\nUnknown thumbnail dir: {i.get()}')
+                    return 0
         Settings.write_settings(
-            vid_setting=vid_Op_get, audio_setting=audio_Op_get, thumb_setting=thumbnail_Op_get)
+            vid_setting=vid_Op.get(), audio_setting=audio_Op.get(), thumb_setting=thumbnail_Op.get())
         messagebox.showinfo(
             title='Saved', message='Settings saved successfully')
 
@@ -569,6 +578,10 @@ class Root(cust.CTk):
                 rf"{self.settings_thumbnailDir_Entry.get()}\Thumbnail_{Exc.replace_invalid_char(video_title)}.png")
             messagebox.showinfo(
                 message=f'Thumbnail downloaded in "{self.settings_thumbnailDir_Entry.get()}"', title='Downloaded')
+        except Exc.fileNotFound as e:
+            messagebox.showerror(
+                message=f'Download failed\nChoose an existing thumbnail directory in settings and try again', title='Error')
+            Exc.error_log(f'Thumbnail Failed ({e})')
         except Exception as e:
             messagebox.showerror(message=f'Download failed', title='Error')
             Exc.error_log(f'Thumbnail Failed ({e})')
@@ -577,7 +590,6 @@ class Root(cust.CTk):
         if not self.URL_entryField.get():  # if entry was empty
             messagebox.showerror(
                 message='URL field is empty            ', title='Error')
-            Exc.error_log(f'Video Failed ({e})')
         else:
             try:
                 try:

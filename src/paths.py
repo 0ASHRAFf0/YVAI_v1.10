@@ -16,11 +16,17 @@ def check_download_path():
                                             audio_setting=download_default_path, thumb_setting=download_default_path)
                 except Exception as e:
                     pass
-                    Exc.error_log(msg=f'handling while starts : {e}')
+                    try:
+                        Exc.error_log(f'handling while starts : {e}')
+                    except Exception as e:
+                        pass
             else:
                 try:
                     Settings.write_settings(vid_setting=download_default_path,
                                             audio_setting=download_default_path, thumb_setting=download_default_path)
                 except Exception as e:
                     pass
-                    Exc.error_log(msg=f'handling while starts : {e}')
+                    try:
+                        Exc.error_log(f'handling while starts : {e}')
+                    except Exception as e:
+                        pass
