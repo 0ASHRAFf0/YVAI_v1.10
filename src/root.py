@@ -68,18 +68,6 @@ class Youtube(YouTube):
         return 0
 
 
-class TopLevel_Root(cust.CTkToplevel):
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.title('Yvai')
-    @staticmethod
-    def open_toplevel() :
-        toplevel = TopLevel_Root()
-        toplevel.mainloop()
-    def init_toplevel(self) :
-        pass
-
-
 class Root(cust.CTk):
     """Main Class Of App (Root Of App)"""
 
@@ -104,7 +92,6 @@ class Root(cust.CTk):
         self.navigation_frame_label = cust.CTkLabel(self.navigation_frame, text="Y  V  A  I", image=Images.yvai_image,
                                                     compound="bottom", font=cust.CTkFont('Tajawal', weight='bold', size=20))
         self.navigation_frame_label.grid(row=0, column=0, padx=5, pady=50)
-
         # Nav Buttons Init
 
         self.youtube_button = cust.CTkButton(self.navigation_frame, corner_radius=7, height=40, border_spacing=10, text="Youtube", image=Images.youtube_image, fg_color="transparent", text_color=(
@@ -363,13 +350,22 @@ class Root(cust.CTk):
         open_new_tab('https://www.instagram.com/a4rafff/')
     def open_github(self):
         open_new_tab('https://github.com/0ASHRAFf0')
-
+    # @staticmethod
+    # def download_for_toplevel() :
+    #     print('static')
+    #     return Root.paste_URL()
     def paste_URL(self):
+        print(1)
         global data
         data = self.clipboard_get()
         self.URL_entryField.delete(0, cust.END)
         self.URL_entryField.insert(string=data, index=0)
         self.update_idletasks()
+        try :
+            Youtube.url = data
+            YouTube(Youtube.url).check_availability()
+        except Exception as e :
+            return 0
         self.url_func()
 
     def delete_first(self):
@@ -380,6 +376,7 @@ class Root(cust.CTk):
     def check_toplevel(self) :
         async def check_video() :
             global clipboard_text
+            clipboard_text = ''
             try :
                 clipboard_text = self.clipboard_get().partition('\n')[0]
                 Youtube.url = clipboard_text
@@ -387,10 +384,8 @@ class Root(cust.CTk):
                 return 1
             except Exception as e :
                 return 0
-        if run(check_video()) :
+        if not run(check_video()) :
             self.after(10,lambda: TopLevel_Root.open_toplevel())
-        else :
-            print("No")
     def browse_dir(self, btn: cust.CTkButton):
         browsed_dir = cust.filedialog.askdirectory()
         if btn.winfo_parent() == '.!ctkframe3.!canvas.!ctkscrollableframe.!ctkframe2':
@@ -698,6 +693,49 @@ class Root(cust.CTk):
                     message='URL is invalid            ', title='Error')
                 Exc.error_log(f'Video Failed ({e})')
 
+
+class TopLevel_Root(cust.CTkToplevel, Root):
+    def __init__(self, **kwargs):
+        super().__init__()
+        try :
+            self.title('Yvai')
+            self.geometry("450x200")
+            self.resizable(False,False)
+            self.grid_columnconfigure(0,weight=1)
+            self.grid_rowconfigure(0,weight=1)
+            self.toplevel_main_frame = cust.CTkFrame(self,corner_radius=10,fg_color='#232F34')
+            self.toplevel_main_frame.grid_columnconfigure(0,weight=1)
+            self.toplevel_main_frame.grid_rowconfigure(0,weight=3)
+            self.toplevel_main_frame.grid_rowconfigure(1,weight=1)
+            self.toplevel_main_frame.grid(row=0,column=0,sticky='nsew')
+            self.toplevel_message_frame = cust.CTkFrame(self.toplevel_main_frame,corner_radius=10,fg_color='transparent')
+            self.toplevel_message_frame.grid_columnconfigure(0,weight=1)
+            self.toplevel_message_frame.grid_rowconfigure(0,weight=1)
+            self.toplevel_message_frame.grid(row=0,column=0,sticky='nsew')
+            self.toplevel_message_label = cust.CTkLabel(self.toplevel_message_frame,text=f'You just copied this link\n " {clipboard_text} "\n Do you want to download this video?',font=cust.CTkFont('Helvatica', weight='bold', size=15),wraplength=400)
+            self.toplevel_message_label.grid(row=0,column=0)
+            self.toplevel_buttons_frame = cust.CTkFrame(self.toplevel_main_frame,corner_radius=10,fg_color='transparent')
+            self.toplevel_buttons_frame.grid_columnconfigure(0,weight=1)
+            self.toplevel_buttons_frame.grid_columnconfigure(1,weight=1)
+            self.toplevel_buttons_frame.grid_rowconfigure(0,weight=1)
+            self.toplevel_buttons_frame.grid(row=1, column=0)
+            self.toplevel_download_button = cust.CTkButton(
+                self.toplevel_buttons_frame, text='Download', height=35, command=lambda : self.toplevel_download_func(download=True), fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'))
+            self.toplevel_download_button.grid(row=0,column=0,padx=35,pady=(0,20))
+            self.toplevel_cancel_button = cust.CTkButton(
+                self.toplevel_buttons_frame, text='Cancel', height=35, command=lambda : self.toplevel_download_func(), fg_color='#F9AA33', border_color='#111', text_color='#111', border_width=1, hover_color='#4A6572', font=cust.CTkFont('Tajawal', weight='bold'))
+            self.toplevel_cancel_button.grid(row=0,column=1,padx=35,pady=(0,20))
+        except Exception as e :
+            pass
+    @staticmethod
+    def open_toplevel() :
+        toplevel = TopLevel_Root()
+        toplevel.mainloop()
+    def toplevel_download_func(self,download = False) :
+        # self.after(10,self.destroy())
+        if download:
+            print('one')
+            Root.paste_URL
 if __name__ == "__main__":
     root = Root()
     root.mainloop()
