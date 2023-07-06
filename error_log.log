@@ -1,0 +1,5 @@
+2023-07-06 12:53:23,304: root, ERROR : Video Failed (regex_search: could not find match for (?:v=|\/)([0-9A-Za-z_-]{11}).*)
+2023-07-06 12:54:12,791: root, ERROR : Video Failed (dFgv8WFLQ66 is unavailable)
+2023-07-06 12:55:38,239: root, ERROR : Video Failed (dFgv8WFLQ88 is unavailable)
+2023-07-06 13:14:45,885: root, ERROR : Video Failed (Va35JOkNJ33 is unavailable)
+2023-07-06 13:22:45,938: root, ERROR : Video Failed (regex_search: could not find match for (?:v=|\/)([0-9A-Za-z_-]{11}).*)

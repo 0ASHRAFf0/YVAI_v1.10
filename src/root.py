@@ -1,5 +1,5 @@
-import os
-import asyncio
+from os import path, startfile
+from asyncio import run
 import customtkinter as cust
 from Exc import Exc
 from PIL import Image
@@ -68,6 +68,18 @@ class Youtube(YouTube):
         return 0
 
 
+class TopLevel_Root(cust.CTkToplevel):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.title('Yvai')
+    @staticmethod
+    def open_toplevel() :
+        toplevel = TopLevel_Root()
+        toplevel.mainloop()
+    def init_toplevel(self) :
+        pass
+
+
 class Root(cust.CTk):
     """Main Class Of App (Root Of App)"""
 
@@ -76,6 +88,10 @@ class Root(cust.CTk):
         self.title('Yvai')
         self.iconbitmap(Images.yvai_icon)
         check_download_path()
+        try:
+            self.after(0, lambda: self.check_toplevel())
+        except Exception as e:
+            pass
         self.after(0, lambda: self.state('zoomed'))
         self.grid_columnconfigure(1, weight=4)
         self.grid_rowconfigure(0, weight=1)
@@ -153,6 +169,7 @@ class Root(cust.CTk):
         self.social_frame.grid_rowconfigure(0, weight=1)
         self.social_frame.grid_rowconfigure(1, weight=1)
         self.social_frame.grid_rowconfigure(2, weight=1)
+        self.social_frame.grid_rowconfigure(3, weight=1)
         self.social_frame.grid_columnconfigure(0, weight=1)
         self.social_frame.grid(
             row=3, column=0, sticky='w', padx=40)
@@ -165,10 +182,15 @@ class Root(cust.CTk):
             "<Button-1>", command=lambda x: self.open_facebook())
         self.facebook_label.grid(row=1, column=0)
         self.instagram_label = cust.CTkLabel(self.social_frame, text_color='#0000EE', text='\tInstagram', font=cust.CTkFont(
-            'Helvatica', weight="normal", size=15, slant='italic', underline=True), cursor='hand2')
+            'Helvatica', weight="normal", size=17, slant='italic', underline=True), cursor='hand2')
         self.instagram_label.bind(
             "<Button-1>", command=lambda x: self.open_instagram())
         self.instagram_label.grid(row=2, column=0)
+        self.github_label = cust.CTkLabel(self.social_frame, text_color='#0000EE', text='\tGitHub', font=cust.CTkFont(
+            'Helvatica', weight="normal", size=17, slant='italic', underline=True), cursor='hand2')
+        self.github_label.bind(
+            "<Button-1>", command=lambda x: self.open_github())
+        self.github_label.grid(row=3, column=0)
 
         # settings Frame init
         self.settings_frame = cust.CTkScrollableFrame(
@@ -339,6 +361,8 @@ class Root(cust.CTk):
 
     def open_instagram(self):
         open_new_tab('https://www.instagram.com/a4rafff/')
+    def open_github(self):
+        open_new_tab('https://github.com/0ASHRAFf0')
 
     def paste_URL(self):
         global data
@@ -353,7 +377,20 @@ class Root(cust.CTk):
         self.info_frame.grid_forget()
         self.update_idletasks()
 # show video informations
-
+    def check_toplevel(self) :
+        async def check_video() :
+            global clipboard_text
+            try :
+                clipboard_text = self.clipboard_get().partition('\n')[0]
+                Youtube.url = clipboard_text
+                YouTube(Youtube.url).check_availability()
+                return 1
+            except Exception as e :
+                return 0
+        if run(check_video()) :
+            self.after(10,lambda: TopLevel_Root.open_toplevel())
+        else :
+            print("No")
     def browse_dir(self, btn: cust.CTkButton):
         browsed_dir = cust.filedialog.askdirectory()
         if btn.winfo_parent() == '.!ctkframe3.!canvas.!ctkscrollableframe.!ctkframe2':
@@ -372,7 +409,7 @@ class Root(cust.CTk):
         audio_Op = self.settings_audioDir_Entry
         thumbnail_Op = self.settings_thumbnailDir_Entry
         for i in [vid_Op, audio_Op, thumbnail_Op]:
-            if not os.path.isdir(i.get()):
+            if not path.isdir(i.get()):
                 if i == vid_Op:
                     messagebox.showwarning(
                         title='Error', message=f'Settings Unsaved\nUnknown video dir: {i.get()}')
@@ -400,8 +437,14 @@ class Root(cust.CTk):
                          [settings_Entries_list.index(i)])
             except Exception as e:
                 check_download_path()
+    def destroy_thumbnail(self) :
+        self.thumbnail_frame.destroy()
 
     def show_info(self):
+        try :
+            self.destroy_thumbnail()
+        except Exception as e :
+            pass
         self.tkinterImage_video_thumbnail = cust.CTkImage(light_image=video_thumbnail,
                                                           dark_image=video_thumbnail,
                                                           size=(video_thumbnail.width*(2/3), video_thumbnail.height*(2/3)))
@@ -410,7 +453,7 @@ class Root(cust.CTk):
         self.thumbnail_frame.grid(row=0, column=0, padx=10, pady=20)
         try:
             self.thumbnail_download = cust.CTkButton(
-                self.thumbnail_frame, text=None, image=Images.download_image, fg_color='#F9AA33', hover_color='#4A6572', text_color='#111', height=10, width=10, border_color='#111', border_width=2, corner_radius=3, command=self.dl_thumbnail)
+                self.thumbnail_frame, text='Download thumbnail ', image=Images.download_image, fg_color='#F9AA33', hover_color='#4A6572', text_color='#111', height=10, width=10, border_color='#111', border_width=1, corner_radius=5, command=self.dl_thumbnail)
         except:
             self.thumbnail_download = cust.CTkButton(
                 self.thumbnail_frame, text='download', fg_color='#F9AA33', hover_color='#4A6572', border_width=2, corner_radius=3, command=self.dl_thumbnail)
@@ -505,7 +548,7 @@ class Root(cust.CTk):
         self.update_idletasks()
 
     def open_dl_dir(self):
-        os.startfile(rf'{self.path}')
+        startfile(rf'{self.path}')
 
     def write_video_streamsMenusettings(self):
         self.stream_options_list = []
@@ -553,7 +596,7 @@ class Root(cust.CTk):
         ) if self.option_choosen in video_dict else self.settings_audioDir_Entry.get()
         self.filename = f'{self.fileName_Entry.get()}{self.file_ext[1:-1]}'
         try:
-            self.func = asyncio.run(Youtube.download_stream(
+            self.func = run(Youtube.download_stream(
                 self=self, itag=self.itag, path_dir=self.path, filename=self.filename))
             if self.func:
                 messagebox.showinfo(
@@ -600,7 +643,7 @@ class Root(cust.CTk):
                 self.update_idletasks()
                 Youtube.url = self.URL_entryField.get()
                 YouTube(Youtube.url).check_availability()
-                asyncio.run(Youtube.write(Youtube()))
+                run(Youtube.write(Youtube()))
                 self.show_info()
                 self.show_dl_settings()
                 self.fetching_label.grid_forget()
@@ -647,13 +690,13 @@ class Root(cust.CTk):
                 messagebox.showerror(
                     message='The Video is unavailable', title='Error')
                 Exc.error_log(f'Video Failed ({e})')
+                raise e
             except Exception as e:
                 self.fetching_label.grid_forget()
                 self.update_idletasks()
                 messagebox.showerror(
                     message='URL is invalid            ', title='Error')
                 Exc.error_log(f'Video Failed ({e})')
-
 
 if __name__ == "__main__":
     root = Root()
