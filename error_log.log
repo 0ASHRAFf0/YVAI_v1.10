@@ -1,4 +1,0 @@
-2023-07-06 19:35:43,168: root, ERROR : Video Failed (regex_search: could not find match for (?:v=|\/)([0-9A-Za-z_-]{11}).*)
-2023-07-07 16:25:35,437: root, ERROR : Video Failed (regex_search: could not find match for (?:v=|\/)([0-9A-Za-z_-]{11}).*)
-2023-07-07 16:25:49,949: root, ERROR : Video Failed (regex_search: could not find match for (?:v=|\/)([0-9A-Za-z_-]{11}).*)
-2023-07-07 16:33:44,289: root, ERROR : Video Failed (regex_search: could not find match for (?:v=|\/)([0-9A-Za-z_-]{11}).*)
