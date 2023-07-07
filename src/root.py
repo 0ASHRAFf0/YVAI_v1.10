@@ -71,9 +71,15 @@ class Youtube(YouTube):
 class TopLevel_Root(cust.CTkToplevel):
     def __init__(self, **kwargs):
         super().__init__()
-        try :
+        try:
             self.title('Yvai')
-            self.geometry("450x200")
+            self.width = 450
+            self.height = 200
+            self.desktop_width = self.winfo_screenwidth()
+            self.desktop_height = self.winfo_screenheight()
+            self.x_cordinate = int((self.desktop_width/2)-(self.width/2))
+            self.y_cordinate = int((self.desktop_height/2)-(self.height/2))
+            self.geometry(f"{self.width}x{self.height}+{self.x_cordinate}+{self.y_cordinate}")
             self.resizable(False,False)
             self.grid_columnconfigure(0,weight=1)
             self.grid_rowconfigure(0,weight=1)
@@ -101,13 +107,18 @@ class TopLevel_Root(cust.CTkToplevel):
             self.toplevel_cancel_button.grid(row=0,column=1,padx=35,pady=(0,20))
         except Exception as e :
             pass
-            raise e
+
     @staticmethod
     def open_toplevel() :
-        toplevel = TopLevel_Root()
-        toplevel.mainloop()
+        try :
+            toplevel = TopLevel_Root()
+            toplevel.mainloop()
+        except Exception as e :
+            pass
+
     def toplevel_download_func(self,download = False) :
         self.after(10,self.destroy())
+        root.focus_set()
         if download:
             root.paste_URL()
 
@@ -734,5 +745,12 @@ class Root(cust.CTk):
 
 
 if __name__ == "__main__":
-    root = Root()
-    root.mainloop()
+    try :
+        root = Root()
+        root.mainloop()
+    except Exception as e :
+        pass
+        try :
+            Exc.error_log(f'Root Error ({e})')
+        except Exception as e :
+            pass
